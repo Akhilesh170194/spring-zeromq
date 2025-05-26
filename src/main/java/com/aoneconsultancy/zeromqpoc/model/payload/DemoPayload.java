@@ -1,4 +1,4 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.model.payload;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

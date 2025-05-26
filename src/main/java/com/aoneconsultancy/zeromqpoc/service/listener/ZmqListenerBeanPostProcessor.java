@@ -1,5 +1,6 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.service.listener;
 
+import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;

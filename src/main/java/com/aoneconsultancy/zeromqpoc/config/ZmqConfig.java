@@ -1,5 +1,7 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.config;
 
+import com.aoneconsultancy.zeromqpoc.service.ZmqService;
+import com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerBeanPostProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

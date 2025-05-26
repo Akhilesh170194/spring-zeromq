@@ -1,5 +1,6 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.service.listener;
 
+import com.aoneconsultancy.zeromqpoc.model.payload.DemoPayload;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.BlockingQueue;

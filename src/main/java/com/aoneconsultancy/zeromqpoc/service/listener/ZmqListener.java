@@ -1,4 +1,4 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.service.listener;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

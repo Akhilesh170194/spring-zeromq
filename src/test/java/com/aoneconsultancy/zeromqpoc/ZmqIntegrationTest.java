@@ -1,8 +1,8 @@
 package com.aoneconsultancy.zeromqpoc;
 
-import com.aoneconsultancy.zeromqpoc.zmq.DemoListener;
-import com.aoneconsultancy.zeromqpoc.zmq.DemoPayload;
-import com.aoneconsultancy.zeromqpoc.zmq.ZmqService;
+import com.aoneconsultancy.zeromqpoc.service.listener.DemoListener;
+import com.aoneconsultancy.zeromqpoc.model.payload.DemoPayload;
+import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

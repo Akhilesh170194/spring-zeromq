@@ -1,5 +1,7 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.controller;
 
+import com.aoneconsultancy.zeromqpoc.model.payload.DemoPayload;
+import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

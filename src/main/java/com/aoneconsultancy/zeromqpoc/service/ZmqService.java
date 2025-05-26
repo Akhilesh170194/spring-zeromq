@@ -1,5 +1,6 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.service;
 
+import com.aoneconsultancy.zeromqpoc.config.ZmqProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -21,6 +22,7 @@ import java.util.function.Consumer;
  * Service that manages ZeroMQ push/pull sockets.
  */
 public class ZmqService implements DisposableBean {
+
     private final ZmqProperties properties;
     private final ZContext context = new ZContext();
     private final ZMQ.Socket pushSocket;

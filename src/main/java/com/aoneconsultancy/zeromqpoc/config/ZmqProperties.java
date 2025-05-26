@@ -1,4 +1,4 @@
-package com.aoneconsultancy.zeromqpoc.zmq;
+package com.aoneconsultancy.zeromqpoc.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
