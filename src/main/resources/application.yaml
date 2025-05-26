@@ -1,3 +1,8 @@
 spring:
   application:
     name: zeromq-poc
+
+zeromq:
+  push-bind-address: tcp://*:5555
+  pull-connect-address: tcp://localhost:5555
+  buffer-size: 1000
