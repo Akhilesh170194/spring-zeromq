@@ -18,7 +18,11 @@ public class DemoController {
 
     @GetMapping("/demo")
     public DemoPayload sendDemo() throws Exception {
-        DemoPayload payload = new DemoPayload(1L, "Test", LocalDateTime.now());
+        DemoPayload payload = DemoPayload.builder()
+                .id(1L)
+                .name("Test")
+                .createdAt(LocalDateTime.now())
+                .build();
         zmqService.send(payload);
         return payload;
     }
