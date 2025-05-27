@@ -14,6 +14,9 @@ public class ZmqProperties {
     /** High water mark / buffer size for sockets */
     private int bufferSize = 1000;
 
+    /** Number of threads for {@link com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerContainer}. */
+    private int listenerConcurrency = 1;
+
     public String getPushBindAddress() {
         return pushBindAddress;
     }
@@ -36,5 +39,13 @@ public class ZmqProperties {
 
     public void setBufferSize(int bufferSize) {
         this.bufferSize = bufferSize;
+    }
+
+    public int getListenerConcurrency() {
+        return listenerConcurrency;
+    }
+
+    public void setListenerConcurrency(int listenerConcurrency) {
+        this.listenerConcurrency = listenerConcurrency;
     }
 }
