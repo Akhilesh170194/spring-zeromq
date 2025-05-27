@@ -1,5 +1,6 @@
-package com.aoneconsultancy.zeromqpoc.service.listener;
+package com.aoneconsultancy.zeromqpoc.listener;
 
+import com.aoneconsultancy.zeromqpoc.config.ZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.BeansException;
@@ -18,6 +19,7 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor {
 
     private final ZmqListenerContainerFactory<? extends ZmqListenerContainer> containerFactory;
     private final ObjectMapper mapper;
+
     public ZmqListenerBeanPostProcessor(ZmqListenerContainerFactory<? extends ZmqListenerContainer> containerFactory,
                                         ObjectMapper mapper) {
         this.containerFactory = containerFactory;

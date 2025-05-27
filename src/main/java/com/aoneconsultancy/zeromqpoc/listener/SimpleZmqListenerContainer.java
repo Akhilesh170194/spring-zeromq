@@ -1,4 +1,4 @@
-package com.aoneconsultancy.zeromqpoc.service.listener;
+package com.aoneconsultancy.zeromqpoc.listener;
 
 import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 
@@ -17,7 +17,6 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     private boolean running;
     private Consumer<byte[]> internalListener;
 
-    @Setter
     private int concurrency = 1;
     private ExecutorService executor;
 
@@ -52,6 +51,10 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    public void setConcurrency(int concurrency) {
+        this.concurrency = concurrency;
     }
 
 }

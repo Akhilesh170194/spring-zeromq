@@ -2,9 +2,7 @@ package com.aoneconsultancy.zeromqpoc.config;
 
 import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import com.aoneconsultancy.zeromqpoc.service.ZmqTemplate;
-import com.aoneconsultancy.zeromqpoc.service.listener.SimpleZmqListenerContainerFactory;
-import com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerBeanPostProcessor;
-import com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerContainerFactory;
+import com.aoneconsultancy.zeromqpoc.listener.ZmqListenerBeanPostProcessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

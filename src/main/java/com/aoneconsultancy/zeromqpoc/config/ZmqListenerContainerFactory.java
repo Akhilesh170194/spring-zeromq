@@ -1,5 +1,6 @@
-package com.aoneconsultancy.zeromqpoc.service.listener;
+package com.aoneconsultancy.zeromqpoc.config;
 
+import com.aoneconsultancy.zeromqpoc.listener.ZmqListenerContainer;
 import java.util.function.Consumer;
 
 /**

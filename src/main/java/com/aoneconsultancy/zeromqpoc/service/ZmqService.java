@@ -50,7 +50,7 @@ public class ZmqService implements DisposableBean {
                 if (data != null) {
                     String json = new String(data);
                     System.out.println("Received: " + json);
-                    receivedMessages.offer(json);
+                    boolean received = receivedMessages.offer(json);
                     for (Consumer<byte[]> listener : listeners) {
                         listener.accept(data);
                     }

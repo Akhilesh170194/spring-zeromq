@@ -1,11 +1,8 @@
-package com.aoneconsultancy.zeromqpoc.service.listener;
+package com.aoneconsultancy.zeromqpoc.service;
 
+import com.aoneconsultancy.zeromqpoc.listener.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.model.payload.DemoPayload;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Simple component that receives {@link DemoPayload} messages using

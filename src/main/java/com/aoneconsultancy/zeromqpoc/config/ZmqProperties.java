@@ -1,5 +1,6 @@
 package com.aoneconsultancy.zeromqpoc.config;
 
+import com.aoneconsultancy.zeromqpoc.listener.ZmqListenerContainer;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "zeromq")
@@ -14,7 +15,7 @@ public class ZmqProperties {
     /** High water mark / buffer size for sockets */
     private int bufferSize = 1000;
 
-    /** Number of threads for {@link com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerContainer}. */
+    /** Number of threads for {@link ZmqListenerContainer}. */
     private int listenerConcurrency = 1;
 
     public String getPushBindAddress() {
