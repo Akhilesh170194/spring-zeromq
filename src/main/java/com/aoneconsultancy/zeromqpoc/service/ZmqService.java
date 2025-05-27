@@ -65,12 +65,24 @@ public class ZmqService implements DisposableBean {
         });
     }
 
+    public void sendBytes(byte[] data) {
+        pushSocket.send(data, 0);
+    }
+
     public void send(Object payload) throws JsonProcessingException {
-        pushSocket.send(mapper.writeValueAsBytes(payload), 0);
+        sendBytes(mapper.writeValueAsBytes(payload));
     }
 
     public void registerListener(Consumer<byte[]> listener) {
         listeners.add(listener);
+    }
+
+    /**
+     * Remove a previously registered listener.
+     * @param listener the listener to remove
+     */
+    public void unregisterListener(Consumer<byte[]> listener) {
+        listeners.remove(listener);
     }
 
     public String pollReceived(long timeout, TimeUnit unit) throws InterruptedException {

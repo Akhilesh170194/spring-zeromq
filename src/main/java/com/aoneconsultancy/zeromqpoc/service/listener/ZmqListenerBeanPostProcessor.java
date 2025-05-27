@@ -16,11 +16,11 @@ import java.util.function.Consumer;
  */
 public class ZmqListenerBeanPostProcessor implements BeanPostProcessor {
 
-    private final ZmqService zmqService;
+    private final ZmqListenerContainerFactory<? extends ZmqListenerContainer> containerFactory;
     private final ObjectMapper mapper;
-
-    public ZmqListenerBeanPostProcessor(ZmqService zmqService, ObjectMapper mapper) {
-        this.zmqService = zmqService;
+    public ZmqListenerBeanPostProcessor(ZmqListenerContainerFactory<? extends ZmqListenerContainer> containerFactory,
+                                        ObjectMapper mapper) {
+        this.containerFactory = containerFactory;
         this.mapper = mapper;
     }
 
@@ -50,6 +50,7 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor {
                 throw new RuntimeException("Failed to invoke ZmqListener method", e);
             }
         };
-        zmqService.registerListener(listener);
+        ZmqListenerContainer container = containerFactory.createContainer(listener);
+        container.start();
     }
 }
