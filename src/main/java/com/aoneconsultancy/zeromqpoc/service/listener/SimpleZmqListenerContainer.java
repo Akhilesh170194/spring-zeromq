@@ -5,6 +5,7 @@ import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import lombok.Setter;
 
 /**
  * Default {@link ZmqListenerContainer} implementation backed by {@link ZmqService}.
@@ -15,7 +16,8 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     private Consumer<byte[]> listener;
     private boolean running;
     private Consumer<byte[]> internalListener;
-    private boolean running;
+
+    @Setter
     private int concurrency = 1;
     private ExecutorService executor;
 

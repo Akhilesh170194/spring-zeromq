@@ -13,15 +13,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class DemoListener {
-    private final BlockingQueue<DemoPayload> received = new LinkedBlockingQueue<>();
 
     @ZmqListener
     public void handle(DemoPayload payload) {
-        received.offer(payload);
         System.out.println("@ZmqListener received: " + payload);
     }
 
-    public DemoPayload poll(long timeout, TimeUnit unit) throws InterruptedException {
-        return received.poll(timeout, unit);
-    }
 }

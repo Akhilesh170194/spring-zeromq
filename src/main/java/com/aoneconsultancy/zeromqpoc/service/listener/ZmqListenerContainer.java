@@ -23,4 +23,5 @@ public interface ZmqListenerContainer {
      * @return whether the container is currently running
      */
     boolean isRunning();
+
 }

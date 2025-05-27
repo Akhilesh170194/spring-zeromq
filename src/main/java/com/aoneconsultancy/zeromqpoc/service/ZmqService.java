@@ -23,7 +23,6 @@ import java.util.function.Consumer;
  */
 public class ZmqService implements DisposableBean {
 
-    private final ZmqProperties properties;
     private final ZContext context = new ZContext();
     private final ZMQ.Socket pushSocket;
     private final ZMQ.Socket pullSocket;
@@ -33,7 +32,6 @@ public class ZmqService implements DisposableBean {
     private final List<Consumer<byte[]>> listeners = new CopyOnWriteArrayList<>();
 
     public ZmqService(ZmqProperties properties) {
-        this.properties = properties;
 
         pushSocket = context.createSocket(SocketType.PUSH);
         pushSocket.setHWM(properties.getBufferSize());
