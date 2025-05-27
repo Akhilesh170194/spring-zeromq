@@ -13,6 +13,7 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
 
     private final ZmqService zmqService;
     private Consumer<byte[]> listener;
+    private boolean running;
     private Consumer<byte[]> internalListener;
     private boolean running;
     private int concurrency = 1;
@@ -51,10 +52,4 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
         return running;
     }
 
-    /**
-     * Configure the number of threads used to invoke the listener.
-     */
-    public void setConcurrency(int concurrency) {
-        this.concurrency = concurrency;
-    }
 }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.DisposableBean;
 import org.zeromq.SocketType;
-import org.springframework.integration.zeromq.ZeroMqProxy;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -25,8 +24,7 @@ import java.util.function.Consumer;
 public class ZmqService implements DisposableBean {
 
     private final ZmqProperties properties;
-    private final ZeroMqProxy zeroMqProxy;
-    private final ZContext context;
+    private final ZContext context = new ZContext();
     private final ZMQ.Socket pushSocket;
     private final ZMQ.Socket pullSocket;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -34,18 +32,16 @@ public class ZmqService implements DisposableBean {
     private final ExecutorService listenerExecutor = Executors.newSingleThreadExecutor();
     private final List<Consumer<byte[]>> listeners = new CopyOnWriteArrayList<>();
 
-    public ZmqService(ZmqProperties properties, ZeroMqProxy zeroMqProxy) {
+    public ZmqService(ZmqProperties properties) {
         this.properties = properties;
-        this.zeroMqProxy = zeroMqProxy;
-        this.context = zeroMqProxy.getContext();
 
         pushSocket = context.createSocket(SocketType.PUSH);
         pushSocket.setHWM(properties.getBufferSize());
-        pushSocket.connect("tcp://localhost:" + zeroMqProxy.getFrontendPort());
+        pushSocket.bind(properties.getPushBindAddress());
 
         pullSocket = context.createSocket(SocketType.PULL);
         pullSocket.setHWM(properties.getBufferSize());
-        pullSocket.connect("tcp://localhost:" + zeroMqProxy.getBackendPort());
+        pullSocket.connect(properties.getPullConnectAddress());
     }
 
     @PostConstruct
@@ -94,5 +90,6 @@ public class ZmqService implements DisposableBean {
         listenerExecutor.shutdownNow();
         pushSocket.close();
         pullSocket.close();
+        context.close();
     }
 }
