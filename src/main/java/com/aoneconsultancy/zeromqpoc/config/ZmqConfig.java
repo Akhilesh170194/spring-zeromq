@@ -1,6 +1,7 @@
 package com.aoneconsultancy.zeromqpoc.config;
 
 import com.aoneconsultancy.zeromqpoc.service.ZmqService;
+import com.aoneconsultancy.zeromqpoc.service.ZmqTemplate;
 import com.aoneconsultancy.zeromqpoc.service.listener.SimpleZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerBeanPostProcessor;
 import com.aoneconsultancy.zeromqpoc.service.listener.ZmqListenerContainerFactory;
@@ -19,8 +20,14 @@ public class ZmqConfig {
     }
 
     @Bean
-    public ZmqListenerContainerFactory<?> zmqListenerContainerFactory(ZmqService zmqService) {
-        return new SimpleZmqListenerContainerFactory(zmqService);
+    public ZmqTemplate zmqTemplate(ZmqService zmqService, ObjectMapper mapper) {
+        return new ZmqTemplate(zmqService, mapper);
+    }
+
+    @Bean
+    public ZmqListenerContainerFactory<?> zmqListenerContainerFactory(ZmqService zmqService,
+                                                                      ZmqProperties properties) {
+        return new SimpleZmqListenerContainerFactory(zmqService, properties);
     }
 
     @Bean

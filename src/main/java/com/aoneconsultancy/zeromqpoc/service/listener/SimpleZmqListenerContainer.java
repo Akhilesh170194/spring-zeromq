@@ -2,6 +2,8 @@ package com.aoneconsultancy.zeromqpoc.service.listener;
 
 import com.aoneconsultancy.zeromqpoc.service.ZmqService;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
@@ -12,6 +14,10 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     private final ZmqService zmqService;
     private Consumer<byte[]> listener;
     private boolean running;
+    private Consumer<byte[]> internalListener;
+    private boolean running;
+    private int concurrency = 1;
+    private ExecutorService executor;
 
     public SimpleZmqListenerContainer(ZmqService zmqService) {
         this.zmqService = zmqService;
@@ -25,15 +31,18 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     @Override
     public void start() {
         if (!running && listener != null) {
-            zmqService.registerListener(listener);
+            this.executor = Executors.newFixedThreadPool(concurrency);
+            this.internalListener = bytes -> executor.execute(() -> listener.accept(bytes));
+            zmqService.registerListener(internalListener);
             running = true;
         }
     }
 
     @Override
     public void stop() {
-        if (running && listener != null) {
-            zmqService.unregisterListener(listener);
+        if (running && internalListener != null) {
+            zmqService.unregisterListener(internalListener);
+            executor.shutdown();
             running = false;
         }
     }
@@ -42,4 +51,5 @@ public class SimpleZmqListenerContainer implements ZmqListenerContainer {
     public boolean isRunning() {
         return running;
     }
+
 }

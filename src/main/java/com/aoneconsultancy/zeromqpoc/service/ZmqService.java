@@ -61,8 +61,12 @@ public class ZmqService implements DisposableBean {
         });
     }
 
+    public void sendBytes(byte[] data) {
+        pushSocket.send(data, 0);
+    }
+
     public void send(Object payload) throws JsonProcessingException {
-        pushSocket.send(mapper.writeValueAsBytes(payload), 0);
+        sendBytes(mapper.writeValueAsBytes(payload));
     }
 
     public void registerListener(Consumer<byte[]> listener) {
