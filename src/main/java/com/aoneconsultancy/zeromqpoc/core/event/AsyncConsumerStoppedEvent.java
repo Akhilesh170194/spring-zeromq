@@ -1,11 +1,14 @@
 package com.aoneconsultancy.zeromqpoc.core.event;
 
+import lombok.Getter;
+
 /**
  * An event that is published whenever a consumer is stopped (and not restarted).
  *
  * @author Gary Russell
  * @since 1.7
  */
+@Getter
 @SuppressWarnings("serial")
 public class AsyncConsumerStoppedEvent extends ZmqEvent {
 
@@ -18,10 +21,6 @@ public class AsyncConsumerStoppedEvent extends ZmqEvent {
     public AsyncConsumerStoppedEvent(Object source, Object consumer) {
         super(source);
         this.consumer = consumer;
-    }
-
-    public Object getConsumer() {
-        return this.consumer;
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.aoneconsultancy.zeromqpoc.listener.endpoint;
 
-import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromqpoc.listener.MessageListenerContainer;
@@ -21,28 +21,12 @@ public interface ZmqListenerEndpoint {
     String getId();
 
     /**
-     * Return the concurrency of this endpoint, if any.
-     *
-     * @return the concurrency of this endpoint, or null
-     */
-    @Nullable
-    Integer getConcurrency();
-
-    /**
      * Return the address of this endpoint, if any.
      *
      * @return the address of this endpoint, or null
      */
     @Nullable
     String getAddress();
-
-    /**
-     * Return the socket type of this endpoint, if any.
-     *
-     * @return the socket type of this endpoint, or null
-     */
-    @Nullable
-    ZmqListener.SocketType getSocketType();
 
     /**
      * Return the error handler of this endpoint, if any.
@@ -72,13 +56,6 @@ public interface ZmqListenerEndpoint {
     MessageConverter getMessageConverter();
 
     /**
-     * Return the auto startup flag of this endpoint.
-     *
-     * @return the auto startup flag of this endpoint
-     */
-    boolean isAutoStartup();
-
-    /**
      * Setup the specified message listener container with the model
      * defined by this endpoint.
      *
@@ -88,8 +65,24 @@ public interface ZmqListenerEndpoint {
 
     Executor getTaskExecutor();
 
-    Boolean getBatchListener();
+    Boolean getConsumerBatchEnabled();
 
-    void setBatchListener(Boolean batchListener);
+    void setConsumerBatchEnabled(Boolean consumerBatchEnabled);
 
+    /**
+     * Return the socket event listener of this endpoint, if any.
+     *
+     * @return the socket event listener of this endpoint, or null
+     */
+    @Nullable
+    ZmqSocketMonitor.SocketEventListener getSocketEventListener();
+
+    /**
+     * Set the socket event listener for this endpoint.
+     *
+     * @param socketEventListener the socket event listener
+     */
+    default void setSocketEventListener(ZmqSocketMonitor.SocketEventListener socketEventListener) {
+        // NOSONAR
+    }
 }

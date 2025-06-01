@@ -140,6 +140,7 @@ The integration is configured using Spring Boot's auto-configuration mechanism:
 ### Sending Messages
 
 ```java
+
 @Autowired
 private ZmqTemplate zmqTemplate;
 
@@ -151,6 +152,7 @@ public void sendMessage(MyPayload payload) {
 ### Receiving Messages
 
 ```java
+
 @Component
 public class MyListener {
 

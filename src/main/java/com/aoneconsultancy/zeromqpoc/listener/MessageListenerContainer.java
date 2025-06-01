@@ -2,10 +2,12 @@ package com.aoneconsultancy.zeromqpoc.listener;
 
 import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.core.MessageListener;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.Nullable;
+import org.springframework.util.ErrorHandler;
 
 /**
  * Abstraction representing a ZeroMQ message listener container.
@@ -79,4 +81,8 @@ public interface MessageListenerContainer extends SmartLifecycle, InitializingBe
     @Override
     default void afterPropertiesSet() {
     }
+
+    void setErrorHandler(ErrorHandler errorHandler);
+
+    void setSocketEventListener(ZmqSocketMonitor.SocketEventListener socketEventListener);
 }

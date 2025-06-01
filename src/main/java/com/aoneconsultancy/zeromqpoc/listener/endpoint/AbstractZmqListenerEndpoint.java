@@ -2,11 +2,13 @@ package com.aoneconsultancy.zeromqpoc.listener.endpoint;
 
 import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.core.MessageListener;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromqpoc.listener.MessageListenerContainer;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -23,6 +25,7 @@ import org.springframework.util.Assert;
  * Base class for {@link ZmqListenerEndpoint} implementations.
  * Provides common properties and methods for endpoints.
  */
+@Slf4j
 @Getter
 @Setter
 public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint, BeanFactoryAware {
@@ -31,7 +34,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
 
     @Getter
     @Setter
-    private Boolean batchListener;
+    private Boolean consumerBatchEnabled;
 
     @Nullable
     private Integer concurrency;
@@ -48,6 +51,11 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     @Nullable
     private MessageConverter messageConverter;
 
+    @Nullable
+    @Getter
+    @Setter
+    private ZmqSocketMonitor.SocketEventListener socketEventListener;
+
     @Setter
     private TaskExecutor taskExecutor;
 
@@ -62,10 +70,6 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
 
     @Getter
     private BeanResolver beanResolver;
-
-    public boolean isBatchListener() {
-        return Boolean.TRUE.equals(this.batchListener);
-    }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -92,16 +96,13 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
         }
 
         if (this.errorHandler != null) {
-            // Adapt ZmqListenerErrorHandler to Consumer<Throwable>
             container.setErrorHandler(throwable -> {
-                if (throwable instanceof Exception exception) {
-                    // We don't have access to the message here, so we pass null
-                    this.errorHandler.handleError(null, exception);
-                } else {
-                    // Wrap non-Exception Throwables
-                    this.errorHandler.handleError(null, new Exception(throwable));
-                }
+                log.error("Error occurred in ZMQ listener for endpoint [{}]", this, throwable);
             });
+        }
+
+        if (this.socketEventListener != null) {
+            container.setSocketEventListener(this.socketEventListener);
         }
 
         if (this.messageConverter != null) {
@@ -135,7 +136,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
                 append("] address='").append(this.address).
                 append("' | socketType='").append(this.socketType).
                 append("' | concurrency='").append(this.concurrency).
-                append("' | batchListener='").append(this.batchListener).append("'");
+                append("' | batchListener='").append(this.consumerBatchEnabled).append("'");
     }
 
     @Override

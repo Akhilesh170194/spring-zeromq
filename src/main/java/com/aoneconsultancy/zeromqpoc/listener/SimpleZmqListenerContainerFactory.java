@@ -64,7 +64,7 @@ public class SimpleZmqListenerContainerFactory extends AbstractZmqListenerContai
         instance.setSocketType(ZmqListener.SocketType.PULL);
         instance.setBufferSize(bufferSize);
         instance.setBatchSize(batchSize);
-        if (Boolean.TRUE.equals(this.batchListener)) {
+        if (Boolean.TRUE.equals(this.consumerBatchEnabled)) {
             instance.setConsumerBatchEnabled(true);
         }
 

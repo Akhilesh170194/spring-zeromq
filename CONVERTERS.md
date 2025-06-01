@@ -153,6 +153,7 @@ The choice of converter depends on your specific needs:
 You can configure the message converter used by `ZmqTemplate` in your Spring configuration:
 
 ```java
+
 @Configuration
 public class ZmqConfig {
 
@@ -172,5 +173,7 @@ Or you can set it programmatically:
 
 ```java
 ZmqTemplate template = new ZmqTemplate(context);
-template.setMessageConverter(new SimpleZmqMessageConverter());
+template.
+
+setMessageConverter(new SimpleZmqMessageConverter());
 ```

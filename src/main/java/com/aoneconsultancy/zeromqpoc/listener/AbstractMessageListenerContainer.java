@@ -4,6 +4,7 @@ import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.core.BlockingQueueConsumer;
 import com.aoneconsultancy.zeromqpoc.core.MessageListener;
 import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.message.Message;
 import com.aoneconsultancy.zeromqpoc.listener.exception.MessageRejectedWhileStoppingException;
@@ -148,6 +149,9 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
 
     @Setter
     private String listenerId;
+
+    @Setter
+    protected ZmqSocketMonitor.SocketEventListener socketEventListener;
 
     @Getter
     private long shutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;

@@ -2,6 +2,8 @@ package com.aoneconsultancy.zeromqpoc.annotation;
 
 import com.aoneconsultancy.zeromqpoc.config.ZmqListenerConfigUtils;
 import com.aoneconsultancy.zeromqpoc.config.ZmqListenerConfigurer;
+import com.aoneconsultancy.zeromqpoc.core.DefaultSocketEventListener;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.listener.ZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromqpoc.listener.endpoint.MethodZmqListenerEndpoint;
@@ -26,6 +28,7 @@ import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.Ordered;
 import org.springframework.lang.NonNull;
@@ -62,6 +65,8 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
 
     private BeanExpressionContext expressionContext;
 
+    private ZmqSocketMonitor.SocketEventListener defaultSocketEventListener;
+
     public ZmqListenerBeanPostProcessor() {
     }
 
@@ -71,6 +76,15 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
         if (beanFactory instanceof ConfigurableListableBeanFactory clbf) {
             this.resolver = clbf.getBeanExpressionResolver();
             this.expressionContext = new BeanExpressionContext(clbf, null);
+        }
+
+        // Create default socket event listener
+        try {
+            ApplicationEventPublisher publisher = beanFactory.getBean(ApplicationEventPublisher.class);
+            this.defaultSocketEventListener = new DefaultSocketEventListener(publisher);
+            log.debug("Created default socket event listener");
+        } catch (BeansException e) {
+            log.warn("Could not create default socket event listener: {}", e.getMessage());
         }
     }
 
@@ -100,7 +114,12 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
         endpoint.setSocketType(listenerAnnotation.socketType());
         endpoint.setConcurrency(listenerAnnotation.concurrency());
         endpoint.setMessageConverter(resolveMessageConverter(listenerAnnotation, bean, beanName));
-        endpoint.setBatchListener(listenerAnnotation.batch());
+        endpoint.setConsumerBatchEnabled(listenerAnnotation.batch());
+
+        // Set default socket event listener if available
+        if (this.defaultSocketEventListener != null) {
+            endpoint.setSocketEventListener(this.defaultSocketEventListener);
+        }
 
         ZmqListenerContainerFactory<?> factory = resolveContainerFactory(listenerAnnotation, methodToUse, beanName);
 
@@ -264,4 +283,3 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
     // as we now use direct method invocation instead of Spring Messaging
 
 }
-

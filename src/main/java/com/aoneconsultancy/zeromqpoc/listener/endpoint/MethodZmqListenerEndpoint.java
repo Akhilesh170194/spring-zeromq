@@ -56,7 +56,7 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
 
     @Override
     protected MessagingMessageListenerAdapter createMessageListener(MessageListenerContainer container) {
-        MessagingMessageListenerAdapter messageListener = createMessageListenerInstance(getBatchListener());
+        MessagingMessageListenerAdapter messageListener = createMessageListenerInstance(getConsumerBatchEnabled());
         messageListener.setHandlerAdapter(configureListenerAdapter(messageListener));
         String replyToAddress = getDefaultReplyToAddress();
         if (replyToAddress != null) {
@@ -173,7 +173,7 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
      * @return the {@link MessagingMessageListenerAdapter} instance.
      */
     protected MessagingMessageListenerAdapter createMessageListenerInstance(@Nullable Boolean batch) {
-        return this.adapterProvider.getAdapter(batch == null ? isBatchListener() : batch, this.bean, this.method,
+        return this.adapterProvider.getAdapter(batch == null ? getConsumerBatchEnabled() : batch, this.bean, this.method,
                 this.returnExceptions, this.errorHandler);
     }
 

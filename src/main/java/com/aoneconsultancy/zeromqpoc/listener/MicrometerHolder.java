@@ -13,7 +13,6 @@ import org.springframework.lang.Nullable;
 
 /**
  * Abstraction to avoid hard reference to Micrometer.
- *
  */
 public final class MicrometerHolder {
 

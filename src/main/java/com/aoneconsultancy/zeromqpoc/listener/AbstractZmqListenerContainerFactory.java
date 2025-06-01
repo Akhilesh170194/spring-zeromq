@@ -4,6 +4,7 @@ package com.aoneconsultancy.zeromqpoc.listener;
 
 import com.aoneconsultancy.zeromqpoc.config.ContainerCustomizer;
 import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromqpoc.support.micrometer.ZmqListenerObservationConvention;
@@ -52,7 +53,7 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
     protected MessagePostProcessor[] afterReceivePostProcessors;
 
     @Setter
-    protected Boolean batchListener;
+    protected Boolean consumerBatchEnabled;
 
     @Setter
     protected String address;
@@ -86,6 +87,9 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
     @Setter
     protected ContainerCustomizer<T> containerCustomizer;
 
+    @Setter
+    protected ZmqSocketMonitor.SocketEventListener socketEventListener;
+
     /**
      * Set post-processors which will be applied after the Message is received.
      *
@@ -108,6 +112,14 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
         if (this.messageConverter != null && endpoint != null && endpoint.getMessageConverter() == null) {
             endpoint.setMessageConverter(this.messageConverter);
         }
+        // First set endpoint properties (if available)
+        if (endpoint != null) {
+            javaUtils
+                    .acceptIfNotNull(endpoint.getTaskExecutor(), instance::setTaskExecutor)
+                    .acceptIfNotNull(endpoint.getSocketEventListener(), instance::setSocketEventListener);
+        }
+
+        // Then set factory properties (which will override endpoint properties if set)
         javaUtils
                 .acceptIfNotNull(getApplicationContext(), instance::setApplicationContext)
                 .acceptIfNotNull(this.taskExecutor, instance::setTaskExecutor)
@@ -119,16 +131,23 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(this.concurrency, instance::setConcurrency)
                 .acceptIfNotNull(this.address, instance::setAddress)
                 .acceptIfNotNull(this.bufferSize, instance::setBufferSize)
+                .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 // TODO - Set below 3 properties in the endpoint
                 .acceptIfNotNull(this.batchSize, instance::setBatchSize)
                 .acceptIfNotNull(this.batchTimeout, instance::setBatchReceiveTimeout)
-                .acceptIfNotNull(this.batchTimeoutUnit, instance::setBatchTimeOutUnit);
-        if (endpoint != null) { // endpoint settings overriding default factory settings
-            javaUtils
-                    .acceptIfNotNull(endpoint.getTaskExecutor(), instance::setTaskExecutor);
+                .acceptIfNotNull(this.batchTimeoutUnit, instance::setBatchTimeOutUnit)
+                .acceptIfNotNull(this.consumerBatchEnabled, instance::setConsumerBatchEnabled)
+                .acceptIfNotNull(this.messageConverter, instance::setMessageConverter)
+                .acceptIfNotNull(this.errorHandler, instance::setErrorHandler)
+                .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener);
+
+        if (endpoint != null) { // Set endpoint ID and batch listener
             instance.setListenerId(endpoint.getId());
-            if (endpoint.getBatchListener() == null) {
-                endpoint.setBatchListener(this.batchListener);
+            if (endpoint.getConsumerBatchEnabled() == null) {
+                endpoint.setConsumerBatchEnabled(this.consumerBatchEnabled);
+            }
+            if (this.socketEventListener != null) {
+                endpoint.setSocketEventListener(this.socketEventListener);
             }
         }
         initializeContainer(instance, endpoint);

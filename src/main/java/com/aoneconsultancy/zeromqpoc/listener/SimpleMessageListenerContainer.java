@@ -2,6 +2,7 @@ package com.aoneconsultancy.zeromqpoc.listener;
 
 import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.core.BlockingQueueConsumer;
+import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.event.AsyncConsumerStoppedEvent;
 import com.aoneconsultancy.zeromqpoc.core.event.ZmqConsumerFailedEvent;
 import com.aoneconsultancy.zeromqpoc.support.ActiveObjectCounter;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.Nullable;
@@ -54,6 +56,8 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     private final ActiveObjectCounter<BlockingQueueConsumer> cancellationLock = new ActiveObjectCounter<>();
 
     private Set<BlockingQueueConsumer> consumers;
+    @Setter
+    private ZmqSocketMonitor.SocketEventListener socketEventListener;
 
     public SimpleMessageListenerContainer(ZContext context) {
         super(context);
@@ -151,9 +155,16 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     private AsyncMessageProcessingConsumer createAsyncZmqConsumer() {
 
         String consumerId = "consumer-" + generateConsumerId();
-        BlockingQueueConsumer zmqPull = new BlockingQueueConsumer(consumerId, this.context, this.address, this.bufferSize,
+        BlockingQueueConsumer zmqPull = new BlockingQueueConsumer(consumerId, this.context, this.cancellationLock, this.address,
+                this.bufferSize,
                 convertSocketType(this.socketType), taskExecutorSet);
         zmqPull.setShutdownTimeout(getShutdownTimeout());
+
+        // Configure socket monitoring if event listener is available
+        if (this.socketEventListener != null) {
+            zmqPull.setSocketEventListener(this.socketEventListener);
+        }
+
         AsyncMessageProcessingConsumer consumer = new AsyncMessageProcessingConsumer(zmqPull);
         this.consumers.add(zmqPull);
         this.cancellationLock.add(zmqPull);
@@ -226,7 +237,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                             if (log.isWarnEnabled()) {
                                 log.warn("Closing channel for unresponsive consumer: {}", consumer);
                             }
-                            consumer.stop();
+                            consumer.close();
                         }
                     }
                 }
@@ -340,7 +351,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {
-                consumer.stop();
+                consumer.close();
                 cancellationLock.release(consumer);
                 // Remove this consumer from the set
                 this.consumers.remove(consumer);
@@ -351,7 +362,8 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                 // Create a new consumer with the same address
                 String consumerId = "consumer-" + generateConsumerId();
                 consumer = new BlockingQueueConsumer(
-                        consumerId, context, address, bufferSize, convertSocketType(socketType), taskExecutorSet);
+                        consumerId, context, this.cancellationLock, address, bufferSize, convertSocketType(socketType)
+                        , taskExecutorSet);
 
                 // Create a new AsyncZmqConsumer with the new consumer
                 AsyncMessageProcessingConsumer newAsyncConsumer = new AsyncMessageProcessingConsumer(consumer);
@@ -431,7 +443,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
          */
         public void stop() {
             if (this.consumer != null) {
-                this.consumer.stop();
+                this.consumer.close();
             }
         }
 
