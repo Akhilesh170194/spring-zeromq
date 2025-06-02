@@ -3,11 +3,11 @@ package com.aoneconsultancy.zeromqpoc.listener;
 //import org.zeromq.
 
 import com.aoneconsultancy.zeromqpoc.config.ContainerCustomizer;
-import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
 import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromqpoc.support.micrometer.ZmqListenerObservationConvention;
+import com.aoneconsultancy.zeromqpoc.support.postprocessor.MessagePostProcessor;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;

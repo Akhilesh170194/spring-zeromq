@@ -60,27 +60,25 @@ public class SimpleStringMessageConverter implements MessageConverter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
+    public Object fromMessage(Message message) {
         byte[] body = message.getBody();
 
         if (body == null || body.length == 0) {
             return null;
         }
 
-        if (targetClass == byte[].class) {
-            return (T) body;
-        }
+        // Check the content type to determine how to convert the message
+        String contentType = (String) message.getMessageProperty(ZmqHeaders.CONTENT_TYPE);
 
-        if (targetClass == String.class) {
+        // If it's a text message, convert to String
+        if ("text/plain".equals(contentType)) {
             String encoding = (String) message.getMessageProperty(ZmqHeaders.CONTENT_ENCODING);
             Charset charset = encoding != null ? Charset.forName(encoding) : defaultCharset;
-            return (T) new String(body, charset);
+            return new String(body, charset);
         }
 
-        throw new ZmqMessageConversionException(
-                "SimpleStringZmqMessageConverter only supports String and byte[] target classes, not " +
-                        targetClass.getName());
+        // Otherwise, return the raw bytes
+        return body;
     }
 
     /**

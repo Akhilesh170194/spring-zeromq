@@ -224,6 +224,8 @@ public class BlockingQueueConsumer {
 
             // Set socket options
             this.socket.setHWM(this.highWaterMark);
+            // TODO - Check is we need to set the below or not.
+            // this.socket.setLinger(0);
 
             // Setup socket monitoring if an event listener is configured
             if (this.eventListener != null) {

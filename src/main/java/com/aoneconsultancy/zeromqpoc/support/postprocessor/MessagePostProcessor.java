@@ -1,4 +1,4 @@
-package com.aoneconsultancy.zeromqpoc.core;
+package com.aoneconsultancy.zeromqpoc.support.postprocessor;
 
 import com.aoneconsultancy.zeromqpoc.core.message.Message;
 import com.aoneconsultancy.zeromqpoc.support.ZmqException;

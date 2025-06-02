@@ -1,6 +1,5 @@
 package com.aoneconsultancy.zeromqpoc.support.postprocessor;
 
-import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

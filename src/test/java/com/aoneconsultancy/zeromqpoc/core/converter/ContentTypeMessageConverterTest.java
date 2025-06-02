@@ -39,7 +39,7 @@ class ContentTypeMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, messageProperties);
-        String result = converter.fromMessage(message, String.class);
+        String result = (String) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -57,7 +57,7 @@ class ContentTypeMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, messageProperties);
-        TestSerializable result = converter.fromMessage(message, TestSerializable.class);
+        TestSerializable result = (TestSerializable) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -74,7 +74,7 @@ class ContentTypeMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        String result = converter.fromMessage(message, String.class);
+        String result = (String) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -90,7 +90,7 @@ class ContentTypeMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, messageProperties);
-        String result = converter.fromMessage(message, String.class);
+        String result = (String) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -105,7 +105,7 @@ class ContentTypeMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        TestSerializable result = converter.fromMessage(message, TestSerializable.class);
+        TestSerializable result = (TestSerializable) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);

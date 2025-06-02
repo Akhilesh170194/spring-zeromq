@@ -3,7 +3,6 @@ package com.aoneconsultancy.zeromqpoc.listener;
 import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.core.BlockingQueueConsumer;
 import com.aoneconsultancy.zeromqpoc.core.MessageListener;
-import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
 import com.aoneconsultancy.zeromqpoc.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.message.Message;
@@ -11,6 +10,7 @@ import com.aoneconsultancy.zeromqpoc.listener.exception.MessageRejectedWhileStop
 import com.aoneconsultancy.zeromqpoc.support.ListenerExecutionFailedException;
 import com.aoneconsultancy.zeromqpoc.support.ZmqException;
 import com.aoneconsultancy.zeromqpoc.support.micrometer.ZmqListenerObservationConvention;
+import com.aoneconsultancy.zeromqpoc.support.postprocessor.MessagePostProcessor;
 import com.aoneconsultancy.zeromqpoc.support.postprocessor.MessagePostProcessorUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -115,9 +114,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
 
     @Setter
     protected int concurrency = 1;
-
-    @Setter
-    private ApplicationContext applicationContext;
 
     @Nullable
     @Setter

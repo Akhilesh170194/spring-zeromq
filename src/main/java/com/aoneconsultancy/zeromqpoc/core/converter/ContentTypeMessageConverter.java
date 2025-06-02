@@ -65,7 +65,7 @@ public class ContentTypeMessageConverter implements MessageConverter {
     }
 
     @Override
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
+    public Object fromMessage(Message message) {
         // Get the content type from the message properties
         String contentType = (String) message.getMessageProperty(ZmqHeaders.CONTENT_TYPE);
 
@@ -73,7 +73,7 @@ public class ContentTypeMessageConverter implements MessageConverter {
         MessageConverter converter = getConverter(contentType);
 
         // Convert the message using the appropriate converter
-        return converter.fromMessage(message, targetClass);
+        return converter.fromMessage(message);
     }
 
     /**

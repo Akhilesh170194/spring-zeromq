@@ -1,18 +1,16 @@
 package com.aoneconsultancy.zeromqpoc.listener.endpoint;
 
+import com.aoneconsultancy.zeromqpoc.core.MessageListener;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.error.ZmqListenerErrorHandler;
-import com.aoneconsultancy.zeromqpoc.core.message.Message;
 import com.aoneconsultancy.zeromqpoc.listener.MessageListenerContainer;
 import com.aoneconsultancy.zeromqpoc.listener.adapter.BatchMessagingMessageListenerAdapter;
 import com.aoneconsultancy.zeromqpoc.listener.adapter.MessagingMessageListenerAdapter;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -31,8 +29,7 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
     private Object bean;
     private Method method;
 
-    @Setter
-    private AdapterProvider adapterProvider = new DefaultAdapterProvider();
+    // AdapterProvider has been removed as it's no longer needed
 
     @Setter
     private boolean returnExceptions;
@@ -55,20 +52,25 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
     }
 
     @Override
-    protected MessagingMessageListenerAdapter createMessageListener(MessageListenerContainer container) {
-        MessagingMessageListenerAdapter messageListener = createMessageListenerInstance(getConsumerBatchEnabled());
-        messageListener.setHandlerAdapter(configureListenerAdapter(messageListener));
-        String replyToAddress = getDefaultReplyToAddress();
-        if (replyToAddress != null) {
-            messageListener.setResponseAddress(replyToAddress);
+    protected MessageListener createMessageListener(MessageListenerContainer container) {
+        Boolean batch = getConsumerBatchEnabled();
+        MessagingMessageListenerAdapter messageListener;
+
+        if (batch != null && batch) {
+            messageListener = new BatchMessagingMessageListenerAdapter(this.bean, this.method, this.returnExceptions, this.errorHandler);
+        } else {
+            messageListener = new MessagingMessageListenerAdapter(this.bean, this.method, this.returnExceptions, this.errorHandler);
         }
+
         MessageConverter messageConverter = getMessageConverter();
         if (messageConverter != null) {
             messageListener.setMessageConverter(messageConverter);
         }
+
         if (getBeanResolver() != null) {
             messageListener.setBeanResolver(getBeanResolver());
         }
+
         return messageListener;
     }
 
@@ -76,72 +78,11 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
     public void setupListenerContainer(MessageListenerContainer container) {
         super.setupListenerContainer(container);
 
-        // Determine the type of listener based on the method parameters
-        Parameter[] parameters = this.method.getParameters();
-        if (parameters.length == 1) {
-            if (parameters[0].getType() == Message.class) {
-                // Special case: if there's only one parameter, and it's a ZmqMessage,
-                // use the MessagingMessageListenerAdapter for direct message passing
-                MessagingMessageListenerAdapter adapter = new MessagingMessageListenerAdapter(
-                        this.bean, this.method, false, getErrorHandler());
+        // Create the appropriate message listener adapter based on the method parameters
+        MessageListener messageListener = createMessageListener(container);
 
-                Consumer<Message> messageListener = adapter::onMessage;
-                container.setZmqMessageListener(messageListener);
-                return;
-            } else if (isList(parameters[0].getParameterizedType(), Message.class)) {
-                // Special case for List<ZmqMessage>: use batch adapter
-                BatchMessagingMessageListenerAdapter adapter = new BatchMessagingMessageListenerAdapter(
-                        this.bean, this.method, false, getErrorHandler());
-
-                Consumer<List<Message>> batchListener = adapter::onMessages;
-                container.setZmqBatchMessageListener(batchListener);
-                return;
-            } else if (parameters[0].getType() == byte[].class) {
-                // Direct byte array handling
-                Consumer<byte[]> listener = bytes -> {
-                    try {
-                        method.invoke(bean, bytes);
-                    } catch (Exception e) {
-                        if (getErrorHandler() != null) {
-                            getErrorHandler().handleError(new Message(bytes), e instanceof Exception ? (Exception) e : new RuntimeException(e));
-                        } else {
-                            throw new RuntimeException("Failed to invoke handler method", e);
-                        }
-                    }
-                };
-                container.setMessageListener(listener);
-                return;
-            }
-        } else if (parameters.length == 0) {
-            // Method takes no parameters
-            Consumer<byte[]> listener = bytes -> {
-                try {
-                    method.invoke(bean);
-                } catch (Exception e) {
-                    if (getErrorHandler() != null) {
-                        getErrorHandler().handleError(new Message(bytes), e instanceof Exception ? (Exception) e : new RuntimeException(e));
-                    } else {
-                        throw new RuntimeException("Failed to invoke handler method", e);
-                    }
-                }
-            };
-            container.setMessageListener(listener);
-            return;
-        }
-
-        // Standard case: use message adapter with ZmqMessage
-        MessagingMessageListenerAdapter adapter = new MessagingMessageListenerAdapter(
-                this.bean, this.method, false, getErrorHandler());
-
-        Consumer<byte[]> listener = bytes -> {
-            // Create a ZmqMessage directly from the byte array
-            Message rawMessage = new Message(bytes);
-
-            // Invoke the handler method with the message
-            adapter.onMessage(rawMessage);
-        };
-
-        container.setMessageListener(listener);
+        // Set up the message listener in the container
+        container.setupMessageListener(messageListener);
     }
 
     // These methods have been removed as they're no longer needed since we're directly invoking the method
@@ -166,16 +107,7 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
         return typeArguments.length == 1 && typeArguments[0].equals(elementType);
     }
 
-    /**
-     * Create an empty {@link MessagingMessageListenerAdapter} instance.
-     *
-     * @param batch whether this endpoint is for a batch listener.
-     * @return the {@link MessagingMessageListenerAdapter} instance.
-     */
-    protected MessagingMessageListenerAdapter createMessageListenerInstance(@Nullable Boolean batch) {
-        return this.adapterProvider.getAdapter(batch == null ? getConsumerBatchEnabled() : batch, this.bean, this.method,
-                this.returnExceptions, this.errorHandler);
-    }
+    // This method has been removed as it's no longer needed
 
     @Nullable
     private String getDefaultReplyToAddress() {
@@ -195,9 +127,12 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
     }
 
     private String resolveSendTo(String value) {
-        if (getBeanFactory() != null) {
-            String resolvedValue = getBeanExpressionContext().getBeanFactory().resolveEmbeddedValue(value);
-            Object newValue = getResolver().evaluate(resolvedValue, getBeanExpressionContext());
+        if (getBeanFactory() != null && getResolver() != null && getExpressionContext() != null) {
+            String resolvedValue = value;
+            if (getBeanFactory() instanceof org.springframework.beans.factory.config.ConfigurableListableBeanFactory clbf) {
+                resolvedValue = clbf.resolveEmbeddedValue(value);
+            }
+            Object newValue = getResolver().evaluate(resolvedValue, getExpressionContext());
             Assert.isInstanceOf(String.class, newValue, "Invalid @SendTo expression");
             return (String) newValue;
         } else {
@@ -205,38 +140,5 @@ public class MethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint {
         }
     }
 
-    /**
-     * Provider of listener adapters.
-     *
-     * @since 2.4
-     */
-    public interface AdapterProvider {
-
-        /**
-         * Get an adapter instance.
-         *
-         * @param batch            true for a batch listener.
-         * @param bean             the bean.
-         * @param method           the method.
-         * @param returnExceptions true to return exceptions.
-         * @param errorHandler     the error handler.
-         * @return the adapter.
-         */
-        MessagingMessageListenerAdapter getAdapter(boolean batch, Object bean, Method method, boolean returnExceptions,
-                                                   ZmqListenerErrorHandler errorHandler);
-    }
-
-    private static final class DefaultAdapterProvider implements AdapterProvider {
-
-        @Override
-        public MessagingMessageListenerAdapter getAdapter(boolean batch, Object bean, Method method,
-                                                          boolean returnExceptions, ZmqListenerErrorHandler errorHandler) {
-            if (batch) {
-                return new BatchMessagingMessageListenerAdapter(bean, method, returnExceptions, errorHandler);
-            } else {
-                return new MessagingMessageListenerAdapter(bean, method, returnExceptions, errorHandler);
-            }
-        }
-
-    }
+    // AdapterProvider interface and implementation have been removed as they're no longer needed
 }

@@ -37,7 +37,7 @@ public interface MessageConverter {
     }
 
     /**
-     * Convert a ZmqMessage received from ZeroMQ to an object of the specified type.
+     * Convert a ZmqMessage received from ZeroMQ to an object.
      *
      * @param message the message to convert
      * @return the converted object

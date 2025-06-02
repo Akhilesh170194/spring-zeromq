@@ -66,20 +66,13 @@ public class Jackson2JsonMessageConverter implements MessageConverter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
+    public Object fromMessage(Message message) {
         try {
             // Get the message body
             byte[] body = message.getBody();
 
-            // Convert the JSON to the target class
-            if (targetClass == byte[].class) {
-                return (T) body;
-            } else if (targetClass == String.class) {
-                return (T) new String(body, StandardCharsets.UTF_8);
-            } else {
-                return objectMapper.readValue(body, targetClass);
-            }
+            // By default, convert JSON to a Map
+            return objectMapper.readValue(body, Object.class);
         } catch (IOException e) {
             throw new ZmqMessageConversionException("Failed to convert JSON to object", e);
         }

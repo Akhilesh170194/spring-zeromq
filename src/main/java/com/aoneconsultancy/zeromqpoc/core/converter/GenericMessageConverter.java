@@ -40,40 +40,30 @@ public class GenericMessageConverter implements SmartMessageConverter {
     }
 
     @Override
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
-        return fromMessage(message, targetClass, null);
+    public Object fromMessage(Message message) {
+        return fromMessage(message, null);
     }
 
     @Override
-    public <T> T fromMessage(Message message, Class<T> targetClass, MessageHeaders headers) {
+    public Object fromMessage(Message message, MessageHeaders headers) {
         if (message == null) {
             return null;
         }
 
         Object payload = message.getBody();
 
-        // If the target class is byte[], return the raw bytes
-        if (targetClass == byte[].class) {
-            return targetClass.cast(payload);
-        }
-
-        // If the payload is already of the target type, return it directly
-        if (targetClass.isInstance(payload)) {
-            return targetClass.cast(payload);
-        }
-
-        // Try to convert the payload using the conversion service
-        if (this.conversionService.canConvert(payload.getClass(), targetClass)) {
-            return this.conversionService.convert(payload, targetClass);
-        }
-
-        // If we can't convert directly, try to convert from byte[] to String first
-        if (payload instanceof byte[] && this.conversionService.canConvert(String.class, targetClass)) {
-            String payloadAsString = new String((byte[]) payload);
-            return this.conversionService.convert(payloadAsString, targetClass);
+        // If the payload is a byte array, return it directly
+        if (payload instanceof byte[]) {
+            // Check if we should convert to String based on content type
+            Map<String, Object> properties = message.getMessageProperties();
+            String contentType = (String) properties.getOrDefault("contentType", "");
+            if (contentType.contains("text") || contentType.contains("json")) {
+                return new String((byte[]) payload);
+            }
+            return payload;
         }
 
         // Fallback to SimpleZmqMessageConverter
-        return new SimpleMessageConverter().fromMessage(message, targetClass);
+        return new SimpleMessageConverter().fromMessage(message);
     }
 }

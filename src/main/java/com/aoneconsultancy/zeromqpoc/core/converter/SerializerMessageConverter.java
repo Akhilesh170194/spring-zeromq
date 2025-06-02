@@ -48,8 +48,7 @@ public class SerializerMessageConverter implements MessageConverter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
+    public Object fromMessage(Message message) {
         byte[] body = message.getBody();
 
         if (body == null || body.length == 0) {
@@ -57,14 +56,7 @@ public class SerializerMessageConverter implements MessageConverter {
         }
 
         try {
-            Object deserializedObject = deserialize(body);
-
-            if (targetClass.isInstance(deserializedObject)) {
-                return (T) deserializedObject;
-            } else {
-                throw new ZmqMessageConversionException(
-                        "Deserialized object is not an instance of " + targetClass.getName());
-            }
+            return deserialize(body);
         } catch (Exception e) {
             throw new ZmqMessageConversionException("Failed to deserialize object", e);
         }

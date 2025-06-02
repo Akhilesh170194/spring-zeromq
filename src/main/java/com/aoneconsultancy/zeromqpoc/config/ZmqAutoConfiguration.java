@@ -69,7 +69,7 @@ public class ZmqAutoConfiguration {
                 MessageConverter messageConverter) {
             SimpleZmqListenerContainerFactory factory = new SimpleZmqListenerContainerFactory(context, properties);
             factory.setMessageConverter(messageConverter);
-            factory.setDefaultConcurrency(properties.getListenerConcurrency());
+            factory.setConcurrency(properties.getListenerConcurrency());
             factory.setDefaultAddress(properties.getPullConnectAddress());
             factory.setBatchSize(properties.getBatchSize());
             factory.setBatchTimeout(properties.getBatchTimeout());

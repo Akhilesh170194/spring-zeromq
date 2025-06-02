@@ -2,9 +2,9 @@ package com.aoneconsultancy.zeromqpoc.listener;
 
 import com.aoneconsultancy.zeromqpoc.annotation.ZmqListener;
 import com.aoneconsultancy.zeromqpoc.config.ZmqProperties;
-import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpoint;
+import com.aoneconsultancy.zeromqpoc.support.postprocessor.MessagePostProcessor;
 import java.util.Collection;
 import lombok.Setter;
 import lombok.ToString;

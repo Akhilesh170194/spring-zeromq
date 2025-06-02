@@ -273,7 +273,7 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
 
     private String getEndpointId(ZmqListener zmqListener) {
         if (StringUtils.hasText(zmqListener.id())) {
-            return zmqListener.id();
+            return resolveExpressionAsString(zmqListener.id(), "id");
         } else {
             return ZmqListenerConfigUtils.ZMQ_LISTENER_ANNOTATION_ENDPOINT_CONTAINER_BEAN_NAME + "#" + this.counter.getAndIncrement();
         }

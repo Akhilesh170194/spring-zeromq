@@ -34,7 +34,7 @@ class SerializerMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, properties);
-        TestSerializable result = converter.fromMessage(message, TestSerializable.class);
+        TestSerializable result = (TestSerializable) converter.fromMessage(message, TestSerializable.class);
 
         // Then
         assertNotNull(result);
@@ -77,7 +77,7 @@ class SerializerMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        ComplexSerializable result = converter.fromMessage(message, ComplexSerializable.class);
+        ComplexSerializable result = (ComplexSerializable) converter.fromMessage(message, ComplexSerializable.class);
 
         // Then
         assertNotNull(result);

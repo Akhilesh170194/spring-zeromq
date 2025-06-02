@@ -32,7 +32,7 @@ class SimpleMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        String result = converter.fromMessage(message, String.class);
+        String result = (String) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -50,7 +50,7 @@ class SimpleMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        byte[] result = converter.fromMessage(message, byte[].class);
+        byte[] result = (byte[]) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -66,7 +66,7 @@ class SimpleMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        TestSerializable result = converter.fromMessage(message, TestSerializable.class);
+        TestSerializable result = (TestSerializable) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);
@@ -83,7 +83,7 @@ class SimpleMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        Object result = converter.fromMessage(message, Object.class);
+        Object result = converter.fromMessage(message);
 
         // Then
         assertNotNull(message);
@@ -108,7 +108,7 @@ class SimpleMessageConverterTest {
 
         // When
         Message message = converter.toMessage(payload, null);
-        String result = converter.fromMessage(message, String.class);
+        String result = (String) converter.fromMessage(message);
 
         // Then
         assertNotNull(result);

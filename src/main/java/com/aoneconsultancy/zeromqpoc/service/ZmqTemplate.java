@@ -1,12 +1,12 @@
 package com.aoneconsultancy.zeromqpoc.service;
 
-import com.aoneconsultancy.zeromqpoc.core.MessagePostProcessor;
 import com.aoneconsultancy.zeromqpoc.core.ZmqPush;
 import com.aoneconsultancy.zeromqpoc.core.converter.Jackson2JsonMessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.core.converter.ZmqMessageConversionException;
 import com.aoneconsultancy.zeromqpoc.core.message.Message;
 import com.aoneconsultancy.zeromqpoc.core.message.ZmqHeaders;
+import com.aoneconsultancy.zeromqpoc.support.postprocessor.MessagePostProcessor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

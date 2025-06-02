@@ -68,7 +68,6 @@ public class MessagingMessageConverter implements MessageConverter, Initializing
                 input.getPayload(), messageProperties);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Object fromMessage(Message message) throws MessageConversionException {
         if (message == null) {

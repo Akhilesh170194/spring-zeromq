@@ -79,8 +79,7 @@ public class SimpleMessageConverter implements MessageConverter {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public <T> T fromMessage(Message message, Class<T> targetClass) {
+    public Object fromMessage(Message message) {
         byte[] body = message.getBody();
         Map<String, Object> properties = message.getMessageProperties();
 
@@ -90,29 +89,30 @@ public class SimpleMessageConverter implements MessageConverter {
 
         String contentType = (String) properties.getOrDefault(ZmqHeaders.CONTENT_TYPE, CONTENT_TYPE_BYTES);
 
-        if (targetClass == byte[].class) {
-            return (T) body;
-        } else if (targetClass == String.class) {
+        // Default to returning the byte array
+        if (CONTENT_TYPE_BYTES.equals(contentType)) {
+            return body;
+        }
+        // If it's a text message, convert to String
+        else if (CONTENT_TYPE_TEXT_PLAIN.equals(contentType)) {
             String encoding = (String) properties.getOrDefault(ZmqHeaders.CONTENT_ENCODING, this.defaultCharset);
             try {
-                return (T) new String(body, encoding);
+                return new String(body, encoding);
             } catch (Exception e) {
                 throw new ZmqMessageConversionException("Failed to convert bytes to String", e);
             }
-        } else if (CONTENT_TYPE_SERIALIZED_OBJECT.equals(contentType)) {
+        }
+        // If it's a serialized object, deserialize it
+        else if (CONTENT_TYPE_SERIALIZED_OBJECT.equals(contentType)) {
             try {
-                Object deserializedObject = deserialize(body);
-                if (targetClass.isInstance(deserializedObject)) {
-                    return (T) deserializedObject;
-                }
+                return deserialize(body);
             } catch (Exception e) {
                 throw new ZmqMessageConversionException("Failed to deserialize object", e);
             }
         }
 
-        // If we get here, we couldn't convert to the target class
-        throw new ZmqMessageConversionException(
-                "Could not convert message body to " + targetClass.getName());
+        // If we get here, we couldn't determine the content type, so return the raw bytes
+        return body;
     }
 
 
