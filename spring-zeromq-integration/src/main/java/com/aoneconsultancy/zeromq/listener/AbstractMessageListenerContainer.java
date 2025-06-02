@@ -90,9 +90,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     private Collection<MessagePostProcessor> afterReceivePostProcessors;
 
     @Setter
-    protected String address;
-
-    @Setter
     @Getter
     protected List<String> addresses;
 
@@ -304,7 +301,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
             throw new IllegalStateException("No message listener specified");
         }
 
-        if (this.address == null) {
+        if (this.addresses == null || addresses.isEmpty()) {
             throw new IllegalStateException("No address specified");
         }
         // Initialize the task executor if not provided

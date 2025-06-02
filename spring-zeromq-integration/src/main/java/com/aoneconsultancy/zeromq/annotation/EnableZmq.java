@@ -44,7 +44,7 @@ import org.springframework.core.annotation.AliasFor;
  * <p>Note that {@code ZmqAutoConfiguration} enables ZMQ listener support by default.
  *
  * @see ZmqListener
- * @see ZmqListenerBeanPostProcessor
+ * @see ZmqListenerAnnotationBeanPostProcessor
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

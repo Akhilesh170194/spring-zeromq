@@ -104,7 +104,7 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5555");
     }
 
     /**
@@ -116,7 +116,7 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5556");
     }
 
     /**
@@ -128,14 +128,14 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5557");
 
         /**
          * Topics to publish
          */
         @Setter
         @Getter
-        private List<String> topics;
+        private List<String> topics = List.of();
     }
 
     /**
@@ -147,14 +147,14 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5557");
 
         /**
          * Topics to subscribe to
          */
         @Setter
         @Getter
-        private List<String> topics;
+        private List<String> topics = List.of();
     }
 
     /**
@@ -166,7 +166,7 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5558");
     }
 
     /**
@@ -178,7 +178,7 @@ public class ZmqProperties {
          */
         @Setter
         @Getter
-        private List<String> addresses;
+        private List<String> addresses = List.of("tcp://localhost:5558");
     }
 
 }

@@ -5,7 +5,6 @@ import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
 import java.util.Collection;
-import java.util.List;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +22,6 @@ public class PullZmqSocketListenerContainerFactory extends AbstractZmqListenerCo
 
     @Setter
     private Collection<MessagePostProcessor> afterReceivePostProcessor;
-
-    @Setter
-    private List<String> addresses;
 
     /**
      * Set the default socket type. For SimpleZmqListenerContainer, this must be PULL.

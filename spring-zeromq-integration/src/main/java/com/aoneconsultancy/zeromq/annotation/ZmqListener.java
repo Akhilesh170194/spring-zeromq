@@ -1,6 +1,8 @@
 package com.aoneconsultancy.zeromq.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -11,8 +13,10 @@ import org.springframework.core.annotation.AliasFor;
  * Similar to Spring AMQP's @RabbitListener, this provides configuration
  * options for the listener.
  */
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Documented
+@Repeatable(ZmqListeners.class)
 public @interface ZmqListener {
 
     /**
@@ -28,14 +32,14 @@ public @interface ZmqListener {
      * If not specified, the default address from properties will be used.
      */
     @AliasFor("addresses")
-    String[] values() default {"tcp://localhost:5555"};
+    String[] values() default {};
 
     /**
      * The socket address to connect to, e.g. tcp://localhost:5555.
      * If not specified, the default address from properties will be used.
      */
     @AliasFor("values")
-    String[] addresses() default {"tcp://localhost:5555"};
+    String[] addresses() default {};
 
     /**
      * The socket type to use.

@@ -11,13 +11,13 @@ public abstract class ZmqListenerConfigUtils {
      * The bean name of the internally managed ZeroMQ listener annotation processor.
      */
     public static final String ZMQ_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME =
-            "com.aoneconsultancy.zeromqpoc.annotation.ZmqListenerBeanPostProcessor";
+            "com.aoneconsultancy.zeromqpoc.annotation.intyernalZmqListenerBeanPostProcessor";
 
     /**
      * The bean name of the internally managed ZeroMQ listener endpoint registry.
      */
     public static final String ZMQ_LISTENER_ENDPOINT_REGISTRY_BEAN_NAME =
-            "com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpointRegistry";
+            "com.aoneconsultancy.zeromqpoc.listener.endpoint.internalZmqListenerEndpointRegistry";
 
     public static final String ZMQ_LISTENER_ANNOTATION_ENDPOINT_CONTAINER_BEAN_NAME =
             "com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpointContainer";

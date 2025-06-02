@@ -17,10 +17,11 @@ The project is organized into the following modules:
 To use the ZeroMQ Spring Boot Starter in your project, add the following dependency:
 
 ```xml
+
 <dependency>
-    <groupId>com.aoneconsultancy</groupId>
-    <artifactId>spring-boot-starter-zeromq</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+  <groupId>com.aoneconsultancy</groupId>
+  <artifactId>spring-boot-starter-zeromq</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -31,7 +32,6 @@ Configure ZeroMQ in your `application.properties` or `application.yml`:
 ```properties
 # Enable/disable ZeroMQ integration (default: true)
 zeromq.enabled=true
-
 # Socket configurations
 zeromq.push.addresses[0]=tcp://*:5557
 zeromq.pull.addresses[0]=tcp://localhost:5557
@@ -42,6 +42,7 @@ See the [starter documentation](spring-boot-starter-zeromq/README.md) for more c
 ### Example Usage
 
 ```java
+
 @Service
 public class MyService {
 

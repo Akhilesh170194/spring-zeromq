@@ -137,18 +137,13 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
             if (this.consumers == null) {
                 this.cancellationLock.reset();
 
-                // If addresses list is provided, use it; otherwise use the single address
-                List<String> addressesToUse = this.addresses != null && !this.addresses.isEmpty()
-                        ? this.addresses
-                        : List.of(this.address);
-
                 // Calculate total number of consumers based on concurrency and number of addresses
-                int totalConsumers = this.concurrency * addressesToUse.size();
+                int totalConsumers = this.concurrency * this.addresses.size();
                 this.consumers = new HashSet<>(totalConsumers);
                 Set<AsyncMessageProcessingConsumer> processors = new HashSet<>();
 
                 // Create consumers for each address
-                for (String addr : addressesToUse) {
+                for (String addr : this.addresses) {
                     for (int i = 0; i < this.concurrency; i++) {
                         AsyncMessageProcessingConsumer consumer = createAsyncZmqConsumer(addr);
                         processors.add(consumer);
@@ -165,11 +160,8 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
         return count;
     }
 
-    private AsyncMessageProcessingConsumer createAsyncZmqConsumer() {
-        return createAsyncZmqConsumer(this.address);
-    }
-
     private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String address) {
+
         String consumerId = "consumer-" + generateConsumerId();
         BlockingQueueConsumer zmqPull = new BlockingQueueConsumer(consumerId, this.context, this.cancellationLock, address,
                 this.bufferSize,
@@ -364,6 +356,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     public void restart(BlockingQueueConsumer oldConsumer) {
 
         BlockingQueueConsumer consumer = oldConsumer;
+        String address = consumer.getAddress();
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {

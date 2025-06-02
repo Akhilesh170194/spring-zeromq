@@ -1,6 +1,6 @@
 package com.aoneconsultancy.zeromq.config;
 
-import com.aoneconsultancy.zeromq.annotation.ZmqListenerBeanPostProcessor;
+import com.aoneconsultancy.zeromq.annotation.ZmqListenerAnnotationBeanPostProcessor;
 import com.aoneconsultancy.zeromq.core.converter.Jackson2JsonMessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.listener.PullZmqSocketListenerContainerFactory;
@@ -93,8 +93,8 @@ public class ZmqAutoConfiguration {
 
         @Bean(name = ZmqListenerConfigUtils.ZMQ_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
         @ConditionalOnMissingBean(name = ZmqListenerConfigUtils.ZMQ_LISTENER_ANNOTATION_PROCESSOR_BEAN_NAME)
-        public ZmqListenerBeanPostProcessor zmqListenerBeanPostProcessor(ZmqListenerEndpointRegistry endpointRegistry) {
-            ZmqListenerBeanPostProcessor processor = new ZmqListenerBeanPostProcessor();
+        public ZmqListenerAnnotationBeanPostProcessor zmqListenerBeanPostProcessor(ZmqListenerEndpointRegistry endpointRegistry) {
+            ZmqListenerAnnotationBeanPostProcessor processor = new ZmqListenerAnnotationBeanPostProcessor();
             processor.setEndpointRegistry(endpointRegistry);
             return processor;
         }

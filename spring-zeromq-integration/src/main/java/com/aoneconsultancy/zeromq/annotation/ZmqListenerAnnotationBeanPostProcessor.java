@@ -45,7 +45,7 @@ import org.springframework.util.StringUtils;
  * listener containers for them.
  */
 @Slf4j
-public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered, BeanFactoryAware,
+public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor, Ordered, BeanFactoryAware,
         SmartInitializingSingleton {
 
     public static final String DEFAULT_ZMQ_LISTENER_CONTAINER_FACTORY_BEAN_NAME = "zmqListenerContainerFactory";
@@ -68,7 +68,7 @@ public class ZmqListenerBeanPostProcessor implements BeanPostProcessor, Ordered,
 
     private ZmqSocketMonitor.SocketEventListener defaultSocketEventListener;
 
-    public ZmqListenerBeanPostProcessor() {
+    public ZmqListenerAnnotationBeanPostProcessor() {
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.support.micrometer.ZmqListenerObservationConvention;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,7 +59,7 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
     protected Boolean consumerBatchEnabled;
 
     @Setter
-    protected String address;
+    protected List<String> addresses;
 
     @Setter
     protected Integer concurrency;
@@ -134,7 +135,7 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(getObservationEnabled(), instance::setObservationEnabled)
                 .acceptIfNotNull(this.observationConvention, instance::setObservationConvention)
                 .acceptIfNotNull(this.concurrency, instance::setConcurrency)
-                .acceptIfNotNull(this.address, instance::setAddress)
+                .acceptIfNotNull(this.addresses, instance::setAddresses)
                 .acceptIfNotNull(this.bufferSize, instance::setBufferSize)
                 .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 .acceptIfNotNull(this.batchSize, instance::setBatchSize)

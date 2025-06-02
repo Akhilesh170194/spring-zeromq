@@ -24,10 +24,11 @@ This module is not meant to be used directly. Instead, include the `spring-boot-
 project:
 
 ```xml
+
 <dependency>
-    <groupId>com.aoneconsultancy</groupId>
-    <artifactId>spring-boot-starter-zeromq</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+  <groupId>com.aoneconsultancy</groupId>
+  <artifactId>spring-boot-starter-zeromq</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
 </dependency>
 ```
 

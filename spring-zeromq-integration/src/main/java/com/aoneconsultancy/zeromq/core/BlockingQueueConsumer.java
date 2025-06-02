@@ -36,6 +36,7 @@ public class BlockingQueueConsumer {
     @Getter
     private final String id;
     private final SocketType socketType;
+    @Getter
     private final String address;
     private final int highWaterMark;
     @Setter
