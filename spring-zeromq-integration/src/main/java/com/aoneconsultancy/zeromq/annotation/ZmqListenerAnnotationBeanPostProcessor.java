@@ -7,11 +7,17 @@ import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.listener.ZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromq.listener.endpoint.MethodZmqListenerEndpoint;
+import com.aoneconsultancy.zeromq.listener.endpoint.MultiMethodZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpointRegistrar;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpointRegistry;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +38,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -43,6 +50,10 @@ import org.springframework.util.StringUtils;
  * Similar to Spring AMQP's RabbitListenerAnnotationBeanPostProcessor,
  * this processes methods annotated with @ZmqListener and creates
  * listener containers for them.
+ * 
+ * Also supports class-level @ZmqListener annotations with methods
+ * annotated with @ZmqHandler, similar to Spring AMQP's class-level
+ * @RabbitListener with @RabbitHandler methods.
  */
 @Slf4j
 public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor, Ordered, BeanFactoryAware,
@@ -68,6 +79,8 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
     private ZmqSocketMonitor.SocketEventListener defaultSocketEventListener;
 
+    private final ConcurrentMap<Class<?>, TypeMetadata> typeCache = new ConcurrentHashMap<>();
+
     public ZmqListenerAnnotationBeanPostProcessor() {
     }
 
@@ -91,14 +104,25 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
     @Override
     public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {
-        Class<?> targetClass = bean.getClass();
-        ReflectionUtils.doWithMethods(targetClass, method -> processListenerMethod(bean, method, beanName),
-                method -> method.isAnnotationPresent(ZmqListener.class));
+        Class<?> targetClass = AopUtils.getTargetClass(bean);
+        final TypeMetadata metadata = this.typeCache.computeIfAbsent(targetClass, this::buildMetadata);
+
+        // Process method-level @ZmqListener annotations
+        for (ListenerMethod lm : metadata.listenerMethods) {
+            for (ZmqListener zmqListener : lm.annotations()) {
+                processListenerMethod(bean, lm.method(), beanName, zmqListener);
+            }
+        }
+
+        // Process class-level @ZmqListener annotations with @ZmqHandler methods
+        if (metadata.handlerMethods.length > 0) {
+            processMultiMethodListeners(metadata.classAnnotations, metadata.handlerMethods, bean, beanName);
+        }
+
         return bean;
     }
 
-    private void processListenerMethod(Object bean, Method method, String beanName) {
-        ZmqListener listenerAnnotation = method.getAnnotation(ZmqListener.class);
+    private void processListenerMethod(Object bean, Method method, String beanName, ZmqListener listenerAnnotation) {
         method.setAccessible(true);
 
         Method methodToUse = checkProxy(method, bean);
@@ -126,6 +150,54 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
         // Register the endpoint with the registrar
         this.registrar.registerEndpoint(endpoint, factory);
+    }
+
+    private void processListenerMethod(Object bean, Method method, String beanName) {
+        ZmqListener listenerAnnotation = method.getAnnotation(ZmqListener.class);
+        processListenerMethod(bean, method, beanName, listenerAnnotation);
+    }
+
+    private void processMultiMethodListeners(ZmqListener[] classLevelListeners, Method[] multiMethods,
+                                            Object bean, String beanName) {
+        List<Method> checkedMethods = new ArrayList<>();
+        Method defaultMethod = null;
+
+        for (Method method : multiMethods) {
+            Method checked = checkProxy(method, bean);
+            if (AnnotationUtils.findAnnotation(method, ZmqHandler.class).isDefault()) {
+                final Method toAssert = defaultMethod;
+                Assert.state(toAssert == null, () -> "Only one @ZmqHandler can be marked 'isDefault', found: "
+                        + toAssert.toString() + " and " + method.toString());
+                defaultMethod = checked;
+            }
+            checkedMethods.add(checked);
+        }
+
+        for (ZmqListener classLevelListener : classLevelListeners) {
+            MultiMethodZmqListenerEndpoint endpoint =
+                    new MultiMethodZmqListenerEndpoint(checkedMethods, defaultMethod, bean);
+
+            // Set a unique ID for the endpoint
+            endpoint.setId(getEndpointId(classLevelListener));
+            // Configure the endpoint with the annotation metadata
+            List<String> addresses = List.of(classLevelListener.addresses());
+            if (!addresses.isEmpty()) {
+                endpoint.setAddresses(addresses);
+            }
+            endpoint.setSocketType(classLevelListener.socketType());
+            endpoint.setConcurrency(classLevelListener.concurrency());
+            endpoint.setMessageConverter(resolveMessageConverter(classLevelListener, bean, beanName));
+
+            // Set default socket event listener if available
+            if (this.defaultSocketEventListener != null) {
+                endpoint.setSocketEventListener(this.defaultSocketEventListener);
+            }
+
+            ZmqListenerContainerFactory<?> factory = resolveContainerFactory(classLevelListener, bean, beanName);
+
+            // Register the endpoint with the registrar
+            this.registrar.registerEndpoint(endpoint, factory);
+        }
     }
 
     private Method checkProxy(Method methodArg, Object bean) {
@@ -265,6 +337,53 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         // Actually register all listeners
         this.registrar.afterPropertiesSet();
 
+        // clear the cache - prototype beans will be re-cached.
+        this.typeCache.clear();
+    }
+
+    private TypeMetadata buildMetadata(Class<?> targetClass) {
+        List<ZmqListener> classLevelListeners = findListenerAnnotations(targetClass);
+        final boolean hasClassLevelListeners = classLevelListeners.size() > 0;
+        final List<ListenerMethod> methods = new ArrayList<>();
+        final List<Method> multiMethods = new ArrayList<>();
+
+        ReflectionUtils.doWithMethods(targetClass, method -> {
+            List<ZmqListener> listenerAnnotations = findListenerAnnotations(method);
+            if (listenerAnnotations.size() > 0) {
+                methods.add(new ListenerMethod(method,
+                        listenerAnnotations.toArray(new ZmqListener[0])));
+            }
+            if (hasClassLevelListeners) {
+                ZmqHandler zmqHandler = AnnotationUtils.findAnnotation(method, ZmqHandler.class);
+                if (zmqHandler != null) {
+                    multiMethods.add(method);
+                }
+            }
+        }, ReflectionUtils.USER_DECLARED_METHODS);
+
+        if (methods.isEmpty() && multiMethods.isEmpty()) {
+            return TypeMetadata.EMPTY;
+        }
+
+        return new TypeMetadata(
+                methods.toArray(new ListenerMethod[0]),
+                multiMethods.toArray(new Method[0]),
+                classLevelListeners.toArray(new ZmqListener[0]));
+    }
+
+    private List<ZmqListener> findListenerAnnotations(AnnotatedElement element) {
+        ZmqListener ann = AnnotationUtils.findAnnotation(element, ZmqListener.class);
+        if (ann == null) {
+            return new ArrayList<>();
+        }
+
+        // Check for @ZmqListeners
+        ZmqListeners anns = AnnotationUtils.findAnnotation(element, ZmqListeners.class);
+        if (anns != null) {
+            return Arrays.asList(anns.value());
+        }
+
+        return Arrays.asList(ann);
     }
 
     @Override
@@ -283,4 +402,48 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
     // The ZmqHandlerMethodFactoryAdapter inner class has been removed
     // as we now use direct method invocation instead of Spring Messaging
 
+    /**
+     * The metadata holder of the class with {@link ZmqListener}
+     * and {@link ZmqHandler} annotations.
+     */
+    private static class TypeMetadata {
+
+        /**
+         * Methods annotated with {@link ZmqListener}.
+         */
+        final ListenerMethod[] listenerMethods; // NOSONAR
+
+        /**
+         * Methods annotated with {@link ZmqHandler}.
+         */
+        final Method[] handlerMethods; // NOSONAR
+
+        /**
+         * Class level {@link ZmqListener} annotations.
+         */
+        final ZmqListener[] classAnnotations; // NOSONAR
+
+        static final TypeMetadata EMPTY = new TypeMetadata();
+
+        private TypeMetadata() {
+            this.listenerMethods = new ListenerMethod[0];
+            this.handlerMethods = new Method[0];
+            this.classAnnotations = new ZmqListener[0];
+        }
+
+        TypeMetadata(ListenerMethod[] methods, Method[] multiMethods, ZmqListener[] classLevelListeners) { // NOSONAR
+            this.listenerMethods = methods; // NOSONAR
+            this.handlerMethods = multiMethods; // NOSONAR
+            this.classAnnotations = classLevelListeners; // NOSONAR
+        }
+    }
+
+    /**
+     * A method annotated with {@link ZmqListener}, together with the annotations.
+     *
+     * @param method      the method with annotations
+     * @param annotations on the method
+     */
+    private record ListenerMethod(Method method, ZmqListener[] annotations) {
+    }
 }
