@@ -5,6 +5,8 @@ import com.aoneconsultancy.zeromqpoc.core.converter.Jackson2JsonMessageConverter
 import com.aoneconsultancy.zeromqpoc.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromqpoc.listener.SimpleZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromqpoc.listener.ZmqListenerContainerFactory;
+import com.aoneconsultancy.zeromqpoc.listener.endpoint.ZmqListenerEndpointRegistry;
+import com.aoneconsultancy.zeromqpoc.config.ZmqListenerConfigUtils;
 import com.aoneconsultancy.zeromqpoc.service.ZmqTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.TimeUnit;
@@ -80,8 +82,17 @@ public class ZmqAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        public ZmqListenerBeanPostProcessor zmqListenerBeanPostProcessor() {
-            return new ZmqListenerBeanPostProcessor();
+        public ZmqListenerEndpointRegistry zmqListenerEndpointRegistry() {
+            return new ZmqListenerEndpointRegistry();
+        }
+
+        @Bean
+        @ConditionalOnMissingBean
+        public ZmqListenerBeanPostProcessor zmqListenerBeanPostProcessor(
+                ZmqListenerEndpointRegistry registry) {
+            ZmqListenerBeanPostProcessor processor = new ZmqListenerBeanPostProcessor();
+            processor.setEndpointRegistry(registry);
+            return processor;
         }
     }
 }
