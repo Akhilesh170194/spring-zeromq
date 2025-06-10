@@ -1,7 +1,7 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
-import com.aoneconsultancy.zeromq.service.ZmqTemplate;
+import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -42,36 +42,34 @@ import org.zeromq.ZContext;
 public class ZmqAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
-    protected static class RabbitConnectionFactoryCreator {
+    protected static class ZmqConnectionFactoryCreator {
 
-        private final ZmqProperties properties;
+        protected ZmqConnectionFactoryCreator() {
+        }
+    }
 
-        protected RabbitConnectionFactoryCreator(ZmqProperties properties) {
-            this.properties = properties;
+    @Configuration(proxyBeanMethods = false)
+    @Import(ZmqConnectionFactoryCreator.class)
+    protected static class ZmqTemplateConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean
+        public ZmqTemplateConfigurer zmqTemplateConfigurer(ZmqProperties properties,
+                                                           ObjectProvider<MessageConverter> messageConverter) {
+            ZmqTemplateConfigurer configurer = new ZmqTemplateConfigurer(properties);
+            configurer.setMessageConverter(messageConverter.getIfUnique());
+            return configurer;
         }
 
-        @Configuration(proxyBeanMethods = false)
-        @Import(RabbitConnectionFactoryCreator.class)
-        protected static class RabbitTemplateConfiguration {
-
-            @Bean
-            @ConditionalOnMissingBean
-            public ZmqTemplateConfigurer rabbitTemplateConfigurer(ZmqProperties properties,
-                                                                  ObjectProvider<MessageConverter> messageConverter) {
-                ZmqTemplateConfigurer configurer = new ZmqTemplateConfigurer(properties);
-                configurer.setMessageConverter(messageConverter.getIfUnique());
-                return configurer;
-            }
-
-            @Bean
-            @ConditionalOnMissingBean
-            public ZmqTemplate rabbitTemplate(ZmqTemplateConfigurer configurer,
-                                              ObjectProvider<ZmqTemplateConfigurer> customizers, ZContext zContext) {
-                ZmqTemplate template = new ZmqTemplate(zContext);
-                configurer.configure(template, zContext);
-                return template;
-            }
-
+        @Bean
+        @ConditionalOnMissingBean
+        public ZmqTemplate zmqTemplate(ZmqTemplateConfigurer configurer,
+                                       ObjectProvider<ZmqTemplateCustomizer> customizers, ZContext zContext) {
+            ZmqTemplate template = new ZmqTemplate(zContext);
+            configurer.configure(template, zContext);
+            customizers.orderedStream().forEach((customizer) -> customizer.customize(template));
+            return template;
         }
+
     }
 }

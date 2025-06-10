@@ -152,11 +152,6 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         this.registrar.registerEndpoint(endpoint, factory);
     }
 
-    private void processListenerMethod(Object bean, Method method, String beanName) {
-        ZmqListener listenerAnnotation = method.getAnnotation(ZmqListener.class);
-        processListenerMethod(bean, method, beanName, listenerAnnotation);
-    }
-
     private void processMultiMethodListeners(ZmqListener[] classLevelListeners, Method[] multiMethods,
                                             Object bean, String beanName) {
         List<Method> checkedMethods = new ArrayList<>();
@@ -212,7 +207,7 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
                     try {
                         method = iface.getMethod(method.getName(), method.getParameterTypes());
                         break;
-                    } catch (@SuppressWarnings("unused") NoSuchMethodException noMethod) {
+                    } catch (@SuppressWarnings("unused") NoSuchMethodException ignored) {
                     }
                 }
             } catch (SecurityException ex) {
@@ -233,8 +228,8 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
     private ZmqListenerContainerFactory<?> resolveContainerFactory(ZmqListener rabbitListener,
                                                                    Object factoryTarget, String beanName) {
         ZmqListenerContainerFactory<?> factory = null;
-        String containerFactoryBeanName = rabbitListener.containerFactory() == null ? "containerFactory" :
-                rabbitListener.containerFactory();
+        String containerFactoryBeanName = resolveExpressionAsString(rabbitListener.containerFactory(),
+                "containerFactory");
         if (StringUtils.hasText(containerFactoryBeanName)) {
             Assert.state(this.beanFactory != null, "BeanFactory must be set to obtain container factory by bean name");
             try {
@@ -343,13 +338,20 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
     private TypeMetadata buildMetadata(Class<?> targetClass) {
         List<ZmqListener> classLevelListeners = findListenerAnnotations(targetClass);
-        final boolean hasClassLevelListeners = classLevelListeners.size() > 0;
+        final boolean hasClassLevelListeners = !classLevelListeners.isEmpty();
         final List<ListenerMethod> methods = new ArrayList<>();
         final List<Method> multiMethods = new ArrayList<>();
 
+        if(log.isDebugEnabled()) {
+            log.debug("Searching for @ZmqListener annotations on class [{}]", targetClass);
+        }
+
         ReflectionUtils.doWithMethods(targetClass, method -> {
             List<ZmqListener> listenerAnnotations = findListenerAnnotations(method);
-            if (listenerAnnotations.size() > 0) {
+            if (!listenerAnnotations.isEmpty()) {
+                if (log.isDebugEnabled()) {
+                    log.info("Found @ZmqListener annotations on method [{}]", method);
+                }
                 methods.add(new ListenerMethod(method,
                         listenerAnnotations.toArray(new ZmqListener[0])));
             }
@@ -357,6 +359,9 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
                 ZmqHandler zmqHandler = AnnotationUtils.findAnnotation(method, ZmqHandler.class);
                 if (zmqHandler != null) {
                     multiMethods.add(method);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Found @ZmqHandler annotation on method [{}]", method);
+                    }
                 }
             }
         }, ReflectionUtils.USER_DECLARED_METHODS);
@@ -383,7 +388,7 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
             return Arrays.asList(anns.value());
         }
 
-        return Arrays.asList(ann);
+        return List.of(ann);
     }
 
     @Override

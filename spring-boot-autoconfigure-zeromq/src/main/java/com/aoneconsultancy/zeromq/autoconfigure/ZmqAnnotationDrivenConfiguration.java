@@ -49,9 +49,9 @@ class ZmqAnnotationDrivenConfiguration {
         return configurer;
     }
 
-    @Bean(name = "rabbitListenerContainerFactory")
-    @ConditionalOnMissingBean(name = "rabbitListenerContainerFactory")
-    @ConditionalOnProperty(prefix = "spring.rabbitmq.listener", name = "type", havingValue = "PULL",
+    @Bean(name = "zmqListenerContainerFactory")
+    @ConditionalOnMissingBean(name = "zmqListenerContainerFactory")
+    @ConditionalOnProperty(prefix = "spring.zmq.listener", name = "type", havingValue = "PULL",
             matchIfMissing = true)
     PullZmqSocketListenerContainerFactory simpleRabbitListenerContainerFactory(
             PullZmqSocketListenerContainerFactoryConfigurer configurer,

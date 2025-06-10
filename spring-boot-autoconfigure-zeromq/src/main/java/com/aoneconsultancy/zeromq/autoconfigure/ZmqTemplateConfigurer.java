@@ -17,7 +17,7 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
-import com.aoneconsultancy.zeromq.service.ZmqTemplate;
+import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import lombok.Setter;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.util.Assert;
@@ -70,5 +70,6 @@ public class ZmqTemplateConfigurer {
             template.setMessageConverter(this.messageConverter);
         }
         map.from(context).whenNonNull().to(template::setContext);
+        // TODO - set the zeromq address to connect to.
     }
 }

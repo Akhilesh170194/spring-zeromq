@@ -12,10 +12,9 @@
   <description>Spring Boot Integration for ZeroMQ</description>
 
   <modules>
-    <module>spring-zeromq-integration</module>
+    <module>spring-zeromq-core</module>
     <module>spring-boot-autoconfigure-zeromq</module>
     <module>spring-boot-starter-zeromq</module>
-    <module>spring-boot-zeromq-app</module>
   </modules>
 
   <properties>

@@ -1,6 +1,5 @@
-package com.aoneconsultancy.zeromq.service;
+package com.aoneconsultancy.zeromq.core;
 
-import com.aoneconsultancy.zeromq.core.ZmqPush;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.SimpleMessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.ZmqMessageConversionException;
@@ -17,7 +16,9 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.util.Assert;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+import org.zeromq.ZMQ;
 
 /**
  * Helper similar to Spring's {@code RabbitTemplate} for sending
@@ -31,6 +32,13 @@ public class ZmqTemplate implements DisposableBean {
     private ZContext context;
     private final Map<String, ZmqPush> pushSockets = new HashMap<>();
     private final int bufferSize;
+
+    public void start() {
+        ZMQ.Socket socket = context.createSocket(SocketType.PUSH);
+        socket.setSendBufferSize(1000);
+        socket.setSndHWM(1000);
+        socket.setPlainUsername("abc");
+    }
 
     /**
      * Get the message converter used by this template.

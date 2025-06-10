@@ -55,9 +55,8 @@ public @interface ZmqListener {
 
     /**
      * The name of the container factory to use.
-     * Defaults to "zmqListenerContainerFactory".
      */
-    String containerFactory() default "zmqListenerContainerFactory";
+    String containerFactory() default "";
 
     /**
      * Override the container factory's message converter used for this listener.

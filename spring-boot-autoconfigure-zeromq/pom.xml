@@ -14,7 +14,7 @@
   <dependencies>
     <dependency>
       <groupId>com.aoneconsultancy</groupId>
-      <artifactId>spring-zeromq-integration</artifactId>
+      <artifactId>spring-zeromq-core</artifactId>
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>

@@ -8,7 +8,7 @@
     <version>0.0.1-SNAPSHOT</version>
   </parent>
 
-  <artifactId>spring-zeromq-integration</artifactId>
+  <artifactId>spring-zeromq-core</artifactId>
   <name>ZeroMQ Spring Boot Core Implementation</name>
   <description>Core functionality for ZeroMQ Spring Boot integration</description>
 
