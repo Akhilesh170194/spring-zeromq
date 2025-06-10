@@ -16,11 +16,13 @@
 
 package com.aoneconsultancy.zeromq.autoconfigure;
 
-import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
+import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
+import com.aoneconsultancy.zeromq.support.ZmqException;
 import lombok.Setter;
 import org.springframework.boot.context.properties.PropertyMapper;
 import org.springframework.util.Assert;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 
 /**
@@ -70,6 +72,18 @@ public class ZmqTemplateConfigurer {
             template.setMessageConverter(this.messageConverter);
         }
         map.from(context).whenNonNull().to(template::setContext);
-        // TODO - set the zeromq address to connect to.
+
+        // Configure a template with properties from the new structure
+        ZmqProperties.Template templateConfig = this.zmqProperties.getTemplate();
+
+        ZmqProperties.Template.Producer producer = this.zmqProperties.getTemplate().getProducer();
+        ZmqProperties.Listener.Consumer consumer = this.zmqProperties.getListener().getConsumer();
+        if (producer != null) {
+            if (consumer != null) {
+                if (consumer.getType() == SocketType.PULL && !producer.getType().equals(SocketType.PUSH)) {
+                    throw new ZmqException("Invalid producer type for PULL consumer. Must be PUSH. Found: " + producer.getType());
+                }
+            }
+        }
     }
 }

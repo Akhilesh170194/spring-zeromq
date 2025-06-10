@@ -31,7 +31,7 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
      * @param errorHandler     the error handler to use
      */
     public MultiMethodMessageListenerAdapter(Object bean, List<Method> methods, Method defaultMethod,
-                                            boolean returnExceptions, ZmqListenerErrorHandler errorHandler) {
+                                             boolean returnExceptions, ZmqListenerErrorHandler errorHandler) {
         super(bean, defaultMethod != null ? defaultMethod : methods.get(0), returnExceptions, errorHandler);
         Assert.notEmpty(methods, "Handler methods must not be empty");
         this.handlerMethods = new ArrayList<>(methods);
@@ -45,7 +45,7 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
         if (method != null) {
             invokeHandlerMethod(method, message);
         } else {
-            log.warn("No handler method found for payload type: {}", 
+            log.warn("No handler method found for payload type: {}",
                     payload != null ? payload.getClass().getName() : "null");
         }
     }
@@ -77,7 +77,7 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
         }
 
         Class<?> payloadClass = payload.getClass();
-        
+
         // First, try to find an exact match
         for (Method method : this.handlerMethods) {
             if (method.getParameterCount() > 0) {
@@ -87,19 +87,19 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
                 }
             }
         }
-        
+
         // If no exact match, try to find a compatible match
         for (Method method : this.handlerMethods) {
             if (method.getParameterCount() > 0) {
                 Class<?> paramType = method.getParameterTypes()[0];
-                
+
                 // Handle special cases like byte[] to String conversion
                 if (payload instanceof byte[] && paramType == String.class) {
                     return method;
                 } else if (payload instanceof String && paramType == byte[].class) {
                     return method;
                 }
-                
+
                 // Handle collection types
                 if (payload instanceof List && paramType.isAssignableFrom(List.class)) {
                     Type genericType = method.getGenericParameterTypes()[0];
@@ -116,7 +116,7 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
                 }
             }
         }
-        
+
         // If no match found, return the default method
         return this.defaultMethod;
     }
@@ -130,18 +130,18 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
     private void invokeHandlerMethod(Method method, Message message) {
         try {
             Object result;
-            
+
             // Check if the method has parameters
             if (method.getParameterCount() > 0) {
                 // Extract payload based on method parameter type
                 Class<?> paramType = method.getParameterTypes()[0];
                 Object payload;
-                
+
                 if (Message.class.isAssignableFrom(paramType)) {
                     payload = message; // Pass the raw message
                 } else {
                     Object rawPayload = getMessageConverter().fromMessage(message);
-                    
+
                     // Try to cast or convert the payload to the parameter type
                     if (paramType.isInstance(rawPayload)) {
                         payload = rawPayload;
@@ -155,14 +155,14 @@ public class MultiMethodMessageListenerAdapter extends MessagingMessageListenerA
                         payload = rawPayload;
                     }
                 }
-                
+
                 // Invoke the method with the payload
                 result = method.invoke(getBean(), payload);
             } else {
                 // Invoke the method with no parameters
                 result = method.invoke(getBean());
             }
-            
+
             // Handle result if needed
             if (result != null) {
                 // Create an InvocationResult with null for sendTo and returnType

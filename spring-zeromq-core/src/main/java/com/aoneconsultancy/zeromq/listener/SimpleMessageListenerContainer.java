@@ -2,6 +2,7 @@ package com.aoneconsultancy.zeromq.listener;
 
 import com.aoneconsultancy.zeromq.annotation.ZmqListener;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
+import com.aoneconsultancy.zeromq.core.DefaultSocketEventListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.event.AsyncConsumerStoppedEvent;
 import com.aoneconsultancy.zeromq.core.event.ZmqConsumerFailedEvent;
@@ -57,7 +58,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
 
     private Set<BlockingQueueConsumer> consumers;
     @Setter
-    private ZmqSocketMonitor.SocketEventListener socketEventListener;
+    private ZmqSocketMonitor.SocketEventListener socketEventListener = new DefaultSocketEventListener(null);
 
     public SimpleMessageListenerContainer(ZContext context) {
         super(context);
@@ -137,7 +138,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
             if (this.consumers == null) {
                 this.cancellationLock.reset();
 
-                // Calculate total number of consumers based on concurrency and number of addresses
+                // Calculate the total number of consumers based on concurrency and number of addresses
                 int totalConsumers = this.concurrency * this.addresses.size();
                 this.consumers = new HashSet<>(totalConsumers);
                 Set<AsyncMessageProcessingConsumer> processors = new HashSet<>();
@@ -163,19 +164,20 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String address) {
 
         String consumerId = "consumer-" + generateConsumerId();
-        BlockingQueueConsumer zmqPull = new BlockingQueueConsumer(consumerId, this.context, this.cancellationLock, address,
-                this.bufferSize,
+        BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(consumerId, this.context, this.cancellationLock, address,
+                this.recvHwm,
                 convertSocketType(this.socketType), taskExecutorSet);
-        zmqPull.setShutdownTimeout(getShutdownTimeout());
+        zmqMsgPuller.setShutdownTimeout(getShutdownTimeout());
+        zmqMsgPuller.setBind(this.bind);
+        zmqMsgPuller.setConsumeDelay(1000);
+        zmqMsgPuller.setSocketLinger(this.socketLinger);
+        zmqMsgPuller.setSocketRecvBuffer(this.socketRecvBuffer);
+        zmqMsgPuller.setSocketBackoff(this.socketBackoff);
+        zmqMsgPuller.setSocketReconnectInterval(this.socketReconnectInterval);
 
-        // Configure socket monitoring if event listener is available
-        if (this.socketEventListener != null) {
-            zmqPull.setSocketEventListener(this.socketEventListener);
-        }
-
-        AsyncMessageProcessingConsumer consumer = new AsyncMessageProcessingConsumer(zmqPull);
-        this.consumers.add(zmqPull);
-        this.cancellationLock.add(zmqPull);
+        AsyncMessageProcessingConsumer consumer = new AsyncMessageProcessingConsumer(zmqMsgPuller);
+        this.consumers.add(zmqMsgPuller);
+        this.cancellationLock.add(zmqMsgPuller);
 
         return consumer;
     }
@@ -355,55 +357,43 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
      */
     public void restart(BlockingQueueConsumer oldConsumer) {
 
-        BlockingQueueConsumer consumer = oldConsumer;
-        String address = consumer.getAddress();
+        String endpoint = oldConsumer.getEndpoint();
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {
-                consumer.close();
-                cancellationLock.release(consumer);
+                oldConsumer.close();
+                cancellationLock.release(oldConsumer);
                 // Remove this consumer from the set
-                this.consumers.remove(consumer);
+                this.consumers.remove(oldConsumer);
                 if (!isActive()) {
                     // Do not restart - container is stopping
                     return;
                 }
-                // Create a new consumer with the same address
-                String consumerId = "consumer-" + generateConsumerId();
-                consumer = new BlockingQueueConsumer(
-                        consumerId, context, this.cancellationLock, address, bufferSize, convertSocketType(socketType)
-                        , taskExecutorSet);
-
                 // Create a new AsyncZmqConsumer with the new consumer
-                AsyncMessageProcessingConsumer newAsyncConsumer = new AsyncMessageProcessingConsumer(consumer);
-
-                // Add the new consumer to the set
-                consumers.add(consumer);
-                cancellationLock.add(consumer);
-
+                AsyncMessageProcessingConsumer newAsyncConsumer = createAsyncZmqConsumer(endpoint);
                 // Start the new consumer
                 getTaskExecutor().execute(newAsyncConsumer);
 
                 if (log.isDebugEnabled()) {
-                    log.debug("Restarted consumer: {} -> {}", oldConsumer, consumer);
+                    log.debug("Restarted consumer: {} -> {}", oldConsumer, oldConsumer);
                 }
 
                 // Wait for the new consumer to start or fail
                 try {
                     Exception startupException = newAsyncConsumer.getStartupException();
                     if (startupException != null) {
-                        consumers.remove(consumer);
-                        cancellationLock.release(consumer);
+                        consumers.remove(oldConsumer);
+                        cancellationLock.release(oldConsumer);
                         throw new RuntimeException("Failed to start consumer", startupException);
                     }
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    consumers.remove(consumer);
-                    cancellationLock.release(consumer);
+                    consumers.remove(oldConsumer);
+                    cancellationLock.release(oldConsumer);
                     throw new RuntimeException("Interrupted while waiting for consumer to start", e);
                 } catch (Exception e) {
-                    consumers.remove(consumer);
-                    cancellationLock.release(consumer);
+                    consumers.remove(oldConsumer);
+                    cancellationLock.release(oldConsumer);
                     throw new RuntimeException("Error starting consumer", e);
                 }
             }

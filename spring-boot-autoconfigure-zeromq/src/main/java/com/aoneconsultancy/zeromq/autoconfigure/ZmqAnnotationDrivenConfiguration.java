@@ -37,7 +37,18 @@ class ZmqAnnotationDrivenConfiguration {
     @Bean
     @ConditionalOnMissingBean
     ZContext zContext() {
-        return new ZContext(this.properties.getContextThread());
+        // Create ZContext with the number of IO threads
+        ZContext context = new ZContext(this.properties.getContextThread());
+
+        // Note: ZContext doesn't have a setMaxSockets method in the current version
+        // The maxSockets property is stored in ZmqProperties for future use
+
+        // Set linger period if configured
+        if (this.properties.getLinger() != null) {
+            context.setLinger(this.properties.getLinger());
+        }
+
+        return context;
     }
 
     @Bean

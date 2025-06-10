@@ -69,7 +69,10 @@ public abstract class AbstractZmqListenerContainerFactoryConfigurer<T extends Ab
         map.from(config::getBatchSize).whenNonNull().to(factory::setBatchSize);
         map.from(config::getAcknowledge).whenNonNull().to(factory::setAcknowledge);
         map.from(config::getBatchTimeout).whenNonNull().to(factory::setBatchTimeout);
-        map.from(config::getBufferSize).whenNonNull().to(factory::setBufferSize);
+        map.from(config::getSocketRecvBuffer).whenNonNull().to(factory::setSocketRecvBuffer);
+        map.from(config::getSocketHwm).whenNonNull().to(factory::setRecvHwm);
+        map.from(config::getSocketReconnectInterval).whenNonNull().to(factory::setSocketReconnectInterval);
+        map.from(config::getSocketBackoff).whenNonNull().to(factory::setSocketBackoff);
     }
 
 }

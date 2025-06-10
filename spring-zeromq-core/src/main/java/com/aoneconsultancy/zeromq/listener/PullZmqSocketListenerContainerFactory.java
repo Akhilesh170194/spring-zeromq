@@ -8,6 +8,7 @@ import java.util.Collection;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 
 /**
@@ -28,8 +29,8 @@ public class PullZmqSocketListenerContainerFactory extends AbstractZmqListenerCo
      *
      * @param defaultSocketType the default socket type
      */
-    public void setSocketType(ZmqListener.SocketType defaultSocketType) {
-        if (defaultSocketType != ZmqListener.SocketType.PULL) {
+    public void setSocketType(SocketType defaultSocketType) {
+        if (defaultSocketType != SocketType.PULL) {
             throw new IllegalArgumentException("SimpleZmqListenerContainer only supports PULL sockets. " +
                     "For other socket types, extend AbstractZmqListenerContainer and implement the socket-specific logic.");
         }

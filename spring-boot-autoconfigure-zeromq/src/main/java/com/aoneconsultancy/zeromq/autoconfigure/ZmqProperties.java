@@ -1,5 +1,6 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.Getter;
@@ -15,25 +16,128 @@ import org.zeromq.SocketType;
 @ConfigurationProperties(prefix = "spring.zeromq")
 public class ZmqProperties {
 
-    private Integer contextThread = 1;
-    private Listener listener = new Listener();
+    /**
+     * Total number of I/O threads used internally by ZeroMQ
+     */
+    private Integer ioThreads = 2;
 
+    /**
+     * How long to wait before closing socket (in ms)
+     */
+    private Integer linger = 0;
+
+    /**
+     * Maximum number of sockets allowed in context
+     */
+    private Integer maxSockets = 1024;
+
+    /**
+     * Authentication configuration
+     */
+    private final Auth auth = new Auth();
+
+    /**
+     * Listener configuration
+     */
+    private final Listener listener = new Listener();
+
+    /**
+     * Template configuration
+     */
+    private final Template template = new Template();
+
+    /**
+     * Authentication configuration
+     */
+    @Data
+    public static class Auth {
+        /**
+         * Whether authentication is enabled
+         */
+        private boolean enabled = false;
+
+        /**
+         * Authentication mechanism (PLAIN/CURVE)
+         */
+        private String mechanism;
+
+        /**
+         * Username for PLAIN authentication
+         */
+        private String username;
+
+        /**
+         * Password for PLAIN authentication
+         */
+        private String password;
+
+        /**
+         * Authentication domain
+         */
+        private String domain = "global";
+
+        /**
+         * CURVE authentication configuration
+         */
+        private final Curve curve = new Curve();
+
+        /**
+         * CURVE authentication configuration
+         */
+        @Data
+        public static class Curve {
+            /**
+             * Whether this is a CURVE server
+             */
+            private boolean server = false;
+
+            /**
+             * Server public key (base64 or hex)
+             */
+            private String publicKey;
+
+            /**
+             * Server secret key (base64 or hex)
+             */
+            private String secretKey;
+
+            /**
+             * Client keys for authentication
+             */
+            private List<ClientKey> clientKeys = new ArrayList<>();
+
+            /**
+             * Client key configuration
+             */
+            @Data
+            public static class ClientKey {
+                /**
+                 * Name of the client
+                 */
+                private String name;
+
+                /**
+                 * Client public key (base64 or hex)
+                 */
+                private String publicKey;
+            }
+        }
+    }
+
+    /**
+     * Listener configuration
+     */
     @Data
     public static class Listener {
 
+        /**
+         * Whether to enable consumer batching
+         */
         private Boolean consumerBatchEnabled;
-
         /**
-         * High watermark / buffer size for sockets
+         * Number of threads for message listener containers
          */
-        private int bufferSize = 1000;
-
-        private Boolean acknowledge;
-
-        /**
-         * Number of threads for message listener containers.
-         */
-        private int concurrency = 1;
+        private int concurrency = 3;
 
         /**
          * Maximum number of messages to process in a batch
@@ -46,139 +150,153 @@ public class ZmqProperties {
         private long batchTimeout = 1000;
 
         /**
-         * Connection retry timeout in milliseconds.
-         * When a socket disconnects, the system will try to reconnect for this duration.
-         * Default is 30000 (30 seconds).
+         * Connection retry timeout in milliseconds
          */
-        private long connectionRetryTimeout = 30000;
+        private long retryTimeout = 30000;
 
         /**
-         * Default socket type
+         * How long to poll socket in ms before retry loop
          */
-        private SocketType type = SocketType.PULL;
+        private long socketPollTimeout = 500;
 
         /**
-         * Configuration for PUSH sockets
+         * Low-level ZMQ receive buffer size
          */
-        @Getter
-        private final Push push = new Push();
+        private int socketRecvBuffer = 1024;
 
         /**
-         * Configuration for PULL sockets
+         * High watermark to control flow
          */
-        @Getter
-        private final Pull pull = new Pull();
+        private int socketHwm = 1000;
 
         /**
-         * Configuration for PUB sockets
+         * Interval in ms for reconnection attempts
          */
-        @Getter
-        private final Pub pub = new Pub();
+        private long socketReconnectInterval = 5000;
 
         /**
-         * Configuration for SUB sockets
+         * Backoff time between failed polls
          */
-        @Getter
-        private final Sub sub = new Sub();
+        private long socketBackoff = 100;
 
         /**
-         * Configuration for REQ sockets
+         * Whether to acknowledge messages
          */
-        @Getter
-        private final Req req = new Req();
+        private Boolean acknowledge;
 
         /**
-         * Configuration for REP sockets
+         * Consumer configurations
          */
-        @Getter
-        private final Rep rep = new Rep();
+        private Consumer consumer = new Consumer();
 
+        /**
+         * Consumer configuration
+         */
+        @Data
+        public static class Consumer {
+            /**
+             * Name of the consumer
+             */
+            private String name = "workerPullConsumer";
+
+            /**
+             * Type of socket (SUB, PULL, etc.)
+             */
+            private SocketType type = SocketType.PULL;
+
+            /**
+             * Whether to bind or connect the socket
+             */
+            private boolean bind = false;
+
+            /**
+             * List of addresses for the socket
+             */
+            private List<String> addresses = List.of("tcp://localhost:5555");
+
+            /**
+             * Topics to subscribe to (for SUB sockets)
+             */
+            private List<String> topics = new ArrayList<>();
+        }
     }
 
     /**
-     * Configuration for PUSH sockets
+     * Template configuration
      */
-    public static class Push {
+    @Data
+    public static class Template {
         /**
-         * List of addresses for push sockets
+         * Default socket to use
          */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5555");
+        private String defaultSocket;
+
+        /**
+         * Timeout for send in ms
+         */
+        private long sendTimeout = 2000;
+
+        /**
+         * Low-level ZMQ send buffer size
+         */
+        private int socketSendBuffer = 1024;
+
+        /**
+         * High watermark for producer sockets
+         */
+        private int socketHwm = 1000;
+
+        /**
+         * Number of times to retry poll/send
+         */
+        private int pollRetry = 3;
+
+        /**
+         * Delay between retries
+         */
+        private long retryDelay = 100;
+
+        /**
+         * Whether to block or drop when HWM reached
+         */
+        private boolean backpressureEnabled = true;
+
+        /**
+         * Producer configurations
+         */
+        private Producer producer = new Producer();
+
+        /**
+         * Producer configuration
+         */
+        @Data
+        public static class Producer {
+            /**
+             * Name of the producer
+             */
+            private String name = "workerPushProducer";
+
+            /**
+             * Type of socket (PUB, PUSH, etc.)
+             */
+            private SocketType type = SocketType.PUSH;
+
+            /**
+             * Whether to bind or connect the socket
+             */
+            private boolean bind = false;
+
+            /**
+             * List of addresses for the socket
+             */
+            private List<String> addresses = List.of("tcp://localhost:5555");
+        }
     }
 
     /**
-     * Configuration for PULL sockets
+     * Get the context thread count (for backward compatibility)
      */
-    public static class Pull {
-        /**
-         * List of addresses for pull sockets
-         */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5556");
+    public Integer getContextThread() {
+        return this.ioThreads;
     }
-
-    /**
-     * Configuration for PUB sockets
-     */
-    public static class Pub {
-        /**
-         * List of addresses for pub sockets
-         */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5557");
-
-        /**
-         * Topics to publish
-         */
-        @Setter
-        @Getter
-        private List<String> topics = List.of();
-    }
-
-    /**
-     * Configuration for SUB sockets
-     */
-    public static class Sub {
-        /**
-         * List of addresses for sub sockets
-         */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5557");
-
-        /**
-         * Topics to subscribe to
-         */
-        @Setter
-        @Getter
-        private List<String> topics = List.of();
-    }
-
-    /**
-     * Configuration for REQ sockets
-     */
-    public static class Req {
-        /**
-         * List of addresses for req sockets
-         */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5558");
-    }
-
-    /**
-     * Configuration for REP sockets
-     */
-    public static class Rep {
-        /**
-         * List of addresses for rep sockets
-         */
-        @Setter
-        @Getter
-        private List<String> addresses = List.of("tcp://localhost:5558");
-    }
-
 }

@@ -148,7 +148,7 @@ public class ZmqSocketMonitor implements Closeable {
     private void monitorLoop() {
         log.debug("ZeroMQ monitor loop started for socket {}", socketId);
 
-        while (running.get() && !Thread.currentThread().isInterrupted()) {
+        while (this.running.get() && !Thread.currentThread().isInterrupted()) {
             try {
                 // Check for a new event with timeout to allow checking the running flag
                 byte[] eventData = monitorSocket.recv(ZMQ.DONTWAIT);
@@ -159,7 +159,7 @@ public class ZmqSocketMonitor implements Closeable {
                     Thread.sleep(10);
                 }
             } catch (Exception e) {
-                if (running.get()) {
+                if (this.running.get()) {
                     log.error("Error in ZeroMQ monitor for socket {}: {}", socketId, e.getMessage(), e);
                 }
                 try {
@@ -248,6 +248,8 @@ public class ZmqSocketMonitor implements Closeable {
     public void stop() {
         if (running.compareAndSet(true, false)) {
             try {
+
+                this.running.set(false);
                 // Stop the monitor
                 monitoredSocket.monitor(null, 0);
 

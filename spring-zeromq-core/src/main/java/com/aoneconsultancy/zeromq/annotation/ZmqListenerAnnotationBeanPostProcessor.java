@@ -50,9 +50,10 @@ import org.springframework.util.StringUtils;
  * Similar to Spring AMQP's RabbitListenerAnnotationBeanPostProcessor,
  * this processes methods annotated with @ZmqListener and creates
  * listener containers for them.
- * 
+ * <p>
  * Also supports class-level @ZmqListener annotations with methods
  * annotated with @ZmqHandler, similar to Spring AMQP's class-level
+ *
  * @RabbitListener with @RabbitHandler methods.
  */
 @Slf4j
@@ -153,7 +154,7 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
     }
 
     private void processMultiMethodListeners(ZmqListener[] classLevelListeners, Method[] multiMethods,
-                                            Object bean, String beanName) {
+                                             Object bean, String beanName) {
         List<Method> checkedMethods = new ArrayList<>();
         Method defaultMethod = null;
 
@@ -342,7 +343,7 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         final List<ListenerMethod> methods = new ArrayList<>();
         final List<Method> multiMethods = new ArrayList<>();
 
-        if(log.isDebugEnabled()) {
+        if (log.isDebugEnabled()) {
             log.debug("Searching for @ZmqListener annotations on class [{}]", targetClass);
         }
 

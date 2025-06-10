@@ -85,7 +85,19 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
     protected TimeUnit batchTimeoutUnit = TimeUnit.MILLISECONDS;
 
     @Setter
-    protected Integer bufferSize = 1000;
+    protected Integer recvHwm = 1000;
+
+    @Setter
+    protected Integer socketRecvBuffer = 1024;
+
+    @Setter
+    protected Long socketReconnectInterval = 5000L;
+
+    @Setter
+    protected Long socketBackoff = 1000L;
+
+    @Setter
+    protected boolean bind = false;
 
     @Setter
     protected ContainerCustomizer<T> containerCustomizer;
@@ -136,7 +148,7 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(this.observationConvention, instance::setObservationConvention)
                 .acceptIfNotNull(this.concurrency, instance::setConcurrency)
                 .acceptIfNotNull(this.addresses, instance::setAddresses)
-                .acceptIfNotNull(this.bufferSize, instance::setBufferSize)
+                .acceptIfNotNull(this.recvHwm, instance::setRecvHwm)
                 .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 .acceptIfNotNull(this.batchSize, instance::setBatchSize)
                 .acceptIfNotNull(this.batchTimeout, instance::setBatchReceiveTimeout)
@@ -144,7 +156,10 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(this.consumerBatchEnabled, instance::setConsumerBatchEnabled)
                 .acceptIfNotNull(this.messageConverter, instance::setMessageConverter)
                 .acceptIfNotNull(this.errorHandler, instance::setErrorHandler)
-                .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener);
+                .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
+                .acceptIfNotNull(this.socketRecvBuffer, instance::setSocketRecvBuffer)
+                .acceptIfNotNull(this.socketReconnectInterval, instance::setSocketReconnectInterval)
+                .acceptIfNotNull(this.socketBackoff, instance::setSocketBackoff);
 
         if (endpoint != null) { // Set endpoint ID and batch listener
             instance.setListenerId(endpoint.getId());

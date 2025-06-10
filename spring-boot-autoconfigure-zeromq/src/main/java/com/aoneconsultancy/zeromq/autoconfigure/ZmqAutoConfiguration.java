@@ -1,7 +1,7 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
-import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
+import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

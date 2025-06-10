@@ -34,21 +34,7 @@ public class ZmqMonitoringEndpoint {
         Map<String, Object> result = new HashMap<>();
 
         eventListener.getAllStats().forEach((socketId, stats) -> {
-            Map<String, Object> socketStats = new HashMap<>();
-            socketStats.put("messagesReceived", stats.getMessagesReceived().get());
-            socketStats.put("messagesSent", stats.getMessagesSent().get());
-            socketStats.put("bytesReceived", stats.getBytesReceived().get());
-            socketStats.put("bytesSent", stats.getBytesSent().get());
-            socketStats.put("connectCount", stats.getConnectCount().get());
-            socketStats.put("disconnectCount", stats.getDisconnectCount().get());
-            socketStats.put("errorCount", stats.getErrorCount().get());
-            socketStats.put("connected", stats.isConnected());
-            socketStats.put("currentEndpoint", stats.getCurrentEndpoint());
-            socketStats.put("lastActivity", stats.getLastActivity() != null ? stats.getLastActivity().toString() : null);
-            socketStats.put("lastConnected", stats.getLastConnected() != null ? stats.getLastConnected().toString() : null);
-            socketStats.put("lastDisconnected", stats.getLastDisconnected() != null ? stats.getLastDisconnected().toString() : null);
-            socketStats.put("idleTimeMs", stats.getIdleTimeMs());
-
+            Map<String, Object> socketStats = getStatsBySocketId(socketId);
             result.put(socketId, socketStats);
         });
 

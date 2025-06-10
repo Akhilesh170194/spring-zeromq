@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.expression.BeanResolver;
 import org.springframework.util.Assert;
 
 /**
@@ -62,8 +61,8 @@ public class MultiMethodZmqListenerEndpoint extends AbstractZmqListenerEndpoint 
             throw new UnsupportedOperationException("Batch processing is not supported for multi-method endpoints");
         }
 
-        MultiMethodMessageListenerAdapter messageListener = 
-                new MultiMethodMessageListenerAdapter(this.bean, this.methods, this.defaultMethod, 
+        MultiMethodMessageListenerAdapter messageListener =
+                new MultiMethodMessageListenerAdapter(this.bean, this.methods, this.defaultMethod,
                         this.returnExceptions, this.errorHandler);
 
         MessageConverter messageConverter = getMessageConverter();

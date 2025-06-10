@@ -18,6 +18,7 @@ package com.aoneconsultancy.zeromq.autoconfigure;
 
 import com.aoneconsultancy.zeromq.listener.PullZmqSocketListenerContainerFactory;
 import org.springframework.boot.context.properties.PropertyMapper;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 
 /**
@@ -49,7 +50,14 @@ public final class PullZmqSocketListenerContainerFactoryConfigurer
         PropertyMapper map = PropertyMapper.get();
         ZmqProperties.Listener config = getZmqProperties().getListener();
         configure(factory, context, config);
-        map.from(config.getPull().getAddresses()).whenNonNull().to(factory::setAddresses);
+
+        ZmqProperties.Listener.Consumer consumer = config.getConsumer();
+        // Find the PULL consumer configuration if available
+        if (consumer != null && consumer.getType() == SocketType.PULL) {
+            map.from(consumer::getAddresses).whenNonNull().to(factory::setAddresses);
+            map.from(consumer::isBind).to(factory::setBind);
+            map.from(consumer::getType).to(factory::setSocketType);
+        }
     }
 
 }

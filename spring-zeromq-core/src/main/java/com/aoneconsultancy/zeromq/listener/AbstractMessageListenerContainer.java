@@ -106,7 +106,22 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     protected volatile long lastReceive = System.currentTimeMillis();
 
     @Setter
-    protected int bufferSize = 1000;
+    protected int recvHwm = 1000;
+
+    @Setter
+    protected int socketLinger = 0;
+
+    @Setter
+    protected int socketRecvBuffer = 1024;
+
+    @Setter
+    protected long socketReconnectInterval = 5000;
+
+    @Setter
+    protected long socketBackoff = 100;
+
+    @Setter
+    protected boolean bind = false;
 
     @Getter
     // Thread pool for message processing
