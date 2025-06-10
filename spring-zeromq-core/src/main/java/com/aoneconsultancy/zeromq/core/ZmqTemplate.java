@@ -33,13 +33,6 @@ public class ZmqTemplate implements DisposableBean {
     private final Map<String, ZmqPush> pushSockets = new HashMap<>();
     private final int bufferSize;
 
-    public void start() {
-        ZMQ.Socket socket = context.createSocket(SocketType.PUSH);
-        socket.setSendBufferSize(1000);
-        socket.setSndHWM(1000);
-        socket.setPlainUsername("abc");
-    }
-
     /**
      * Get the message converter used by this template.
      */
