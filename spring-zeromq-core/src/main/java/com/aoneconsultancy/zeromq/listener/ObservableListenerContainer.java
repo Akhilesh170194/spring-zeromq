@@ -16,11 +16,6 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
-/**
- * @author Gary Russell
- * @author Artem Bilan
- * @since 3.0.5
- */
 @Slf4j
 public abstract class ObservableListenerContainer
         implements MessageListenerContainer, ApplicationContextAware, BeanNameAware, DisposableBean {

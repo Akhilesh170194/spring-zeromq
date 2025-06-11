@@ -1,6 +1,6 @@
 package com.aoneconsultancy.zeromq.support;
 
-import com.aoneconsultancy.zeromq.listener.SimpleMessageListenerContainer;
+import com.aoneconsultancy.zeromq.listener.PullZmqMessageListenerContainer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A simple counter for active objects. This is used by the
- * {@link SimpleMessageListenerContainer}
+ * {@link PullZmqMessageListenerContainer}
  * to keep track of active consumers and their locks.
  * <p>
  * This class is based on Spring AMQP's ActiveObjectCounter.

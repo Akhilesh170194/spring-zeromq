@@ -1,6 +1,5 @@
 package com.aoneconsultancy.zeromq.listener.endpoint;
 
-import com.aoneconsultancy.zeromq.annotation.ZmqListener;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
@@ -21,6 +20,7 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.expression.BeanResolver;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.zeromq.SocketType;
 
 /**
  * Base class for {@link ZmqListenerEndpoint} implementations.
@@ -41,7 +41,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     private Integer concurrency;
 
     @Getter
-    private ZmqListener.SocketType socketType;
+    private SocketType socketType;
 
     @Nullable
     private ZmqListenerErrorHandler errorHandler;
@@ -91,7 +91,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     @Override
     public void setupListenerContainer(MessageListenerContainer container) {
         if (this.addresses != null) {
-            container.setAddresses(this.addresses);
+            container.setEndpoints(this.addresses);
         }
 
         if (this.socketType != null) {

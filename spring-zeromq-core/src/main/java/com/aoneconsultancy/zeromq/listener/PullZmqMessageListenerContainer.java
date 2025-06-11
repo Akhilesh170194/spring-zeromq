@@ -1,9 +1,6 @@
 package com.aoneconsultancy.zeromq.listener;
 
-import com.aoneconsultancy.zeromq.annotation.ZmqListener;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
-import com.aoneconsultancy.zeromq.core.DefaultSocketEventListener;
-import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.event.AsyncConsumerStoppedEvent;
 import com.aoneconsultancy.zeromq.core.event.ZmqConsumerFailedEvent;
 import com.aoneconsultancy.zeromq.support.ActiveObjectCounter;
@@ -20,35 +17,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.Nullable;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 
-/**
- * Default {@link MessageListenerContainer} implementation for PULL sockets using {@link BlockingQueueConsumer}.
- * This implementation is inspired by Spring AMQP's SimpleMessageListenerContainer
- * and provides similar features like dynamic scaling of consumers, error recovery,
- * and proper lifecycle management.
- *
- * <p>Main features include:
- * <ul>
- *   <li>Configurable number of concurrent consumers</li>
- *   <li>Dynamic scaling of consumers based on load</li>
- *   <li>Error recovery with backoff</li>
- *   <li>Proper lifecycle management</li>
- *   <li>Event publishing for monitoring</li>
- * </ul>
- *
- * <p>This container is designed to be similar to Spring AMQP's SimpleMessageListenerContainer,
- * making it easy to use for developers familiar with Spring AMQP.
- *
- * <p>This container is specifically designed for PULL sockets. For other socket types,
- * extend {@link AbstractMessageListenerContainer} and implement the socket-specific logic.
- */
 @Slf4j
-public class SimpleMessageListenerContainer extends AbstractMessageListenerContainer {
+public class PullZmqMessageListenerContainer extends AbstractMessageListenerContainer {
 
     private final Lock consumersLock = new ReentrantLock();
     private final AtomicReference<Thread> containerStoppingForAbort = new AtomicReference<>();
@@ -57,18 +33,14 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     private final ActiveObjectCounter<BlockingQueueConsumer> cancellationLock = new ActiveObjectCounter<>();
 
     private Set<BlockingQueueConsumer> consumers;
-    @Setter
-    private ZmqSocketMonitor.SocketEventListener socketEventListener = new DefaultSocketEventListener(null);
 
-    public SimpleMessageListenerContainer(ZContext context) {
+    public PullZmqMessageListenerContainer(ZContext context) {
         super(context);
-        // Default to PULL socket type
-        setSocketType(ZmqListener.SocketType.PULL);
     }
 
     @Override
-    public void setSocketType(ZmqListener.SocketType socketType) {
-        if (socketType != ZmqListener.SocketType.PULL) {
+    public void setSocketType(SocketType socketType) {
+        if (socketType != SocketType.PULL) {
             throw new IllegalArgumentException("SimpleZmqListenerContainer only supports PULL sockets. " +
                     "For other socket types, extend AbstractZmqListenerContainer and implement the socket-specific logic.");
         }
@@ -139,20 +111,20 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                 this.cancellationLock.reset();
 
                 // Calculate the total number of consumers based on concurrency and number of addresses
-                int totalConsumers = this.concurrency * this.addresses.size();
+                int totalConsumers = this.concurrency * this.endpoints.size();
                 this.consumers = new HashSet<>(totalConsumers);
                 Set<AsyncMessageProcessingConsumer> processors = new HashSet<>();
 
                 // Create consumers for each address
-                for (String addr : this.addresses) {
+                for (String endpoint : this.endpoints) {
                     for (int i = 0; i < this.concurrency; i++) {
-                        AsyncMessageProcessingConsumer consumer = createAsyncZmqConsumer(addr);
+                        String id = "consumer-" + getListenerId() + "-" + i;
+                        AsyncMessageProcessingConsumer consumer = createAsyncZmqConsumer(id, endpoint);
                         processors.add(consumer);
                         this.taskExecutor.execute(consumer);
                         count++;
                     }
                 }
-
                 waitForConsumersToStart(processors);
             }
         } finally {
@@ -161,12 +133,10 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
         return count;
     }
 
-    private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String address) {
+    private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String id, String address) {
 
-        String consumerId = "consumer-" + generateConsumerId();
-        BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(consumerId, this.context, this.cancellationLock, address,
-                this.recvHwm,
-                convertSocketType(this.socketType), taskExecutorSet);
+        BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(id, this.context, this.cancellationLock, address,
+                this.recvHwm, this.socketType, taskExecutorSet);
         zmqMsgPuller.setShutdownTimeout(getShutdownTimeout());
         zmqMsgPuller.setBind(this.bind);
         zmqMsgPuller.setConsumeDelay(1000);
@@ -307,6 +277,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                 event = this.abortEvents.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
                     log.error("Consumer failed: {}", event.getReason(), event.getThrowable());
+                    // Handle the failed event, e.g., notify an external system or perform cleanup
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -358,6 +329,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
     public void restart(BlockingQueueConsumer oldConsumer) {
 
         String endpoint = oldConsumer.getEndpoint();
+        String id = oldConsumer.getId();
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {
@@ -370,7 +342,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                     return;
                 }
                 // Create a new AsyncZmqConsumer with the new consumer
-                AsyncMessageProcessingConsumer newAsyncConsumer = createAsyncZmqConsumer(endpoint);
+                AsyncMessageProcessingConsumer newAsyncConsumer = createAsyncZmqConsumer(id, endpoint);
                 // Start the new consumer
                 getTaskExecutor().execute(newAsyncConsumer);
 
@@ -507,7 +479,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
                     ApplicationEventPublisher applicationEventPublisher = getApplicationEventPublisher();
                     if (applicationEventPublisher != null && !isApplicationContextClosed()) {
                         applicationEventPublisher.publishEvent(
-                                new AsyncConsumerStoppedEvent(SimpleMessageListenerContainer.this, this.consumer));
+                                new AsyncConsumerStoppedEvent(PullZmqMessageListenerContainer.this, this.consumer));
                     }
                 } catch (Exception e) {
                     log.info("Could not cancel message consumer", e);

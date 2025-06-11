@@ -1,6 +1,5 @@
 package com.aoneconsultancy.zeromq.listener;
 
-import com.aoneconsultancy.zeromq.annotation.ZmqListener;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
@@ -9,6 +8,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ErrorHandler;
+import org.zeromq.SocketType;
 
 /**
  * Abstraction representing a ZeroMQ message listener container.
@@ -35,16 +35,16 @@ public interface MessageListenerContainer extends SmartLifecycle, InitializingBe
     /**
      * Set the socket addresses to connect to.
      *
-     * @param addresses the socket address
+     * @param endpoints the socket address
      */
-    void setAddresses(List<String> addresses);
+    void setEndpoints(List<String> endpoints);
 
     /**
      * Set the socket type to use.
      *
      * @param socketType the socket type
      */
-    void setSocketType(ZmqListener.SocketType socketType);
+    void setSocketType(SocketType socketType);
 
     /**
      * Set the concurrency for this listener (number of threads).

@@ -1,7 +1,7 @@
 package com.aoneconsultancy.zeromq.listener;
 
-import com.aoneconsultancy.zeromq.annotation.ZmqListener;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
+import com.aoneconsultancy.zeromq.core.DefaultSocketEventListener;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
@@ -28,30 +28,9 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ErrorHandler;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 
-/**
- * Abstract implementation of {@link MessageListenerContainer} providing common functionality.
- * This class is inspired by Spring AMQP's AbstractMessageListenerContainer and provides
- * similar features like error recovery, proper lifecycle management, and common configuration.
- *
- * <p>Concrete implementations need to implement the actual message consumption logic.
- *
- * <p>This abstract class is designed to be extended for different socket types:
- * <ul>
- *   <li>{@link com.aoneconsultancy.zeromq.annotation.ZmqListener.SocketType#PULL} - Use {@link SimpleMessageListenerContainer}</li>
- *   <li>{@link com.aoneconsultancy.zeromq.annotation.ZmqListener.SocketType#SUB} - Create a new implementation</li>
- *   <li>{@link com.aoneconsultancy.zeromq.annotation.ZmqListener.SocketType#REP} - Create a new implementation</li>
- * </ul>
- *
- * <p>To implement a new socket type:
- * <ol>
- *   <li>Extend this class</li>
- *   <li>Override {@link #doStart()} and {@link #doStop()} methods</li>
- *   <li>Use {@link #convertSocketType(com.aoneconsultancy.zeromq.annotation.ZmqListener.SocketType)} to convert socket types</li>
- *   <li>Implement socket-specific logic</li>
- * </ol>
- */
 @Slf4j
 public abstract class AbstractMessageListenerContainer extends ObservableListenerContainer
         implements ApplicationEventPublisherAware {
@@ -59,10 +38,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     protected static final long DEFAULT_RECEIVE_TIMEOUT = 1000;
 
     public static final long DEFAULT_SHUTDOWN_TIMEOUT = 5000;
-
-    private static final long DEFAULT_CONSUMER_START_TIMEOUT = 60000L;
-
-    private static final String UNCHECKED = "unchecked";
 
     protected final ZContext context;
     protected final Lock lifecycleLock = new ReentrantLock();
@@ -91,10 +66,10 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
 
     @Setter
     @Getter
-    protected List<String> addresses;
+    protected List<String> endpoints;
 
     @Setter
-    protected ZmqListener.SocketType socketType;
+    protected SocketType socketType;
 
     @Setter
     protected ErrorHandler errorHandler;
@@ -163,7 +138,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     private String listenerId;
 
     @Setter
-    protected ZmqSocketMonitor.SocketEventListener socketEventListener;
+    protected ZmqSocketMonitor.SocketEventListener socketEventListener = new DefaultSocketEventListener(applicationEventPublisher);
 
     @Getter
     private long shutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;
@@ -316,7 +291,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
             throw new IllegalStateException("No message listener specified");
         }
 
-        if (this.addresses == null || addresses.isEmpty()) {
+        if (this.endpoints == null || endpoints.isEmpty()) {
             throw new IllegalStateException("No address specified");
         }
         // Initialize the task executor if not provided
@@ -406,24 +381,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
      * <p>Subclasses must implement this method to perform the actual stop logic.
      */
     protected abstract void doStop();
-
-    /**
-     * Convert ZmqListener.SocketType to org.zeromq.SocketType.
-     *
-     * @param socketType the ZmqListener.SocketType
-     * @return the org.zeromq.SocketType
-     */
-    protected org.zeromq.SocketType convertSocketType(ZmqListener.SocketType socketType) {
-        if (socketType == null) {
-            return org.zeromq.SocketType.PULL; // Default to PULL
-        }
-
-        return switch (socketType) {
-            case PULL -> org.zeromq.SocketType.PULL;
-            case SUB -> org.zeromq.SocketType.SUB;
-            case REP -> org.zeromq.SocketType.REP;
-        };
-    }
 
     /**
      * Simple utility class for assertions.

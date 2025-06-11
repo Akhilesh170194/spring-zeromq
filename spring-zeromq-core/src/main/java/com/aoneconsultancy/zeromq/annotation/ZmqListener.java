@@ -7,6 +7,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
+import org.zeromq.SocketType;
 
 /**
  * Annotation for methods that should receive messages from ZeroMQ.
@@ -83,23 +84,4 @@ public @interface ZmqListener {
      */
     boolean batch() default false;
 
-    /**
-     * Supported socket types for ZeroMQ listeners.
-     */
-    enum SocketType {
-        /**
-         * PULL socket - receives messages from a PUSH socket.
-         */
-        PULL,
-
-        /**
-         * SUB socket - receives messages from a PUB socket.
-         */
-        SUB,
-
-        /**
-         * REP socket - receives requests and sends replies.
-         */
-        REP
-    }
 }

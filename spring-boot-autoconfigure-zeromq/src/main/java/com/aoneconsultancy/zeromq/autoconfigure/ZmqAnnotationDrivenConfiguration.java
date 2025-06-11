@@ -3,8 +3,8 @@ package com.aoneconsultancy.zeromq.autoconfigure;
 import com.aoneconsultancy.zeromq.annotation.EnableZmq;
 import com.aoneconsultancy.zeromq.config.ContainerCustomizer;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
+import com.aoneconsultancy.zeromq.listener.PullZmqMessageListenerContainer;
 import com.aoneconsultancy.zeromq.listener.PullZmqSocketListenerContainerFactory;
-import com.aoneconsultancy.zeromq.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -66,7 +66,7 @@ class ZmqAnnotationDrivenConfiguration {
             matchIfMissing = true)
     PullZmqSocketListenerContainerFactory simpleRabbitListenerContainerFactory(
             PullZmqSocketListenerContainerFactoryConfigurer configurer,
-            ObjectProvider<ContainerCustomizer<SimpleMessageListenerContainer>> simpleContainerCustomizer,
+            ObjectProvider<ContainerCustomizer<PullZmqMessageListenerContainer>> simpleContainerCustomizer,
             ZContext zContext) {
         PullZmqSocketListenerContainerFactory factory = new PullZmqSocketListenerContainerFactory(zContext);
         configurer.configure(factory, zContext);

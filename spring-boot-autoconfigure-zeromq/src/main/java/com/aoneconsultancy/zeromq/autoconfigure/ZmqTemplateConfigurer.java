@@ -75,15 +75,31 @@ public class ZmqTemplateConfigurer {
 
         // Configure a template with properties from the new structure
         ZmqProperties.Template templateConfig = this.zmqProperties.getTemplate();
-
-        ZmqProperties.Template.Producer producer = this.zmqProperties.getTemplate().getProducer();
+        ZmqProperties.Template.Producer producer = templateConfig.getProducer();
         ZmqProperties.Listener.Consumer consumer = this.zmqProperties.getListener().getConsumer();
-        if (producer != null) {
-            if (consumer != null) {
-                if (consumer.getType() == SocketType.PULL && !producer.getType().equals(SocketType.PUSH)) {
-                    throw new ZmqException("Invalid producer type for PULL consumer. Must be PUSH. Found: " + producer.getType());
-                }
+
+        // Validate socket type compatibility
+        if (producer != null && consumer != null) {
+            if (consumer.getType() == SocketType.PULL && !producer.getType().equals(SocketType.PUSH)) {
+                throw new ZmqException("Invalid producer type for PULL consumer. Must be PUSH. Found: " + producer.getType());
             }
+            map.from(producer.getType()).whenNonNull().to(template::setSocketType);
+        }
+
+        // Apply template configuration
+        map.from(templateConfig.getSendTimeout()).to(template::setSendTimeout);
+        map.from(templateConfig.getPollRetry()).to(template::setPollRetry);
+        map.from(templateConfig.getRetryDelay()).to(template::setRetryDelay);
+        map.from(templateConfig.isBackpressureEnabled()).to(template::setBackpressureEnabled);
+
+        // Set default address if configured
+        if (templateConfig.getDefaultSocket() != null) {
+            template.setDefaultId(templateConfig.getDefaultSocket());
+        }
+
+        // If producer has addresses, use the first one as default if not already set
+        if (producer != null && !producer.getAddresses().isEmpty() && template.getDefaultId() == null) {
+            template.setDefaultId(producer.getAddresses().get(0));
         }
     }
 }

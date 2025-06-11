@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.CollectionUtils;
 import org.zeromq.ZContext;
 
 /**
@@ -64,8 +65,32 @@ public class ZmqAutoConfiguration {
         @Bean
         @ConditionalOnMissingBean
         public ZmqTemplate zmqTemplate(ZmqTemplateConfigurer configurer,
-                                       ObjectProvider<ZmqTemplateCustomizer> customizers, ZContext zContext) {
-            ZmqTemplate template = new ZmqTemplate(zContext);
+                                       ObjectProvider<ZmqTemplateCustomizer> customizers,
+                                       ZContext zContext,
+                                       ZmqProperties properties) {
+            ZmqProperties.Template templateConfig = properties.getTemplate();
+            ZmqProperties.Template.Producer producer = templateConfig.getProducer();
+
+            // Create template with all configuration parameters
+            ZmqTemplate template = new ZmqTemplate(
+                    zContext,
+                    templateConfig.getSocketHwm(),
+                    templateConfig.getSocketSendBuffer(),
+                    producer.getType(),
+                    producer.isBind()
+            );
+
+            // Set socket endpoints
+            String defaultSocket = templateConfig.getDefaultSocket();
+            template.setDefaultId(defaultSocket);
+            if (!CollectionUtils.isEmpty(producer.getAddresses())) {
+                template.setEndpoints(producer.getAddresses());
+                if (defaultSocket == null) {
+                    template.setDefaultId(producer.getAddresses().get(0));
+                }
+            }
+
+            // Apply additional configuration
             configurer.configure(template, zContext);
             customizers.orderedStream().forEach((customizer) -> customizer.customize(template));
             return template;

@@ -52,9 +52,9 @@ public final class PullZmqSocketListenerContainerFactoryConfigurer
         configure(factory, context, config);
 
         ZmqProperties.Listener.Consumer consumer = config.getConsumer();
-        // Find the PULL consumer configuration if available
         if (consumer != null && consumer.getType() == SocketType.PULL) {
-            map.from(consumer::getAddresses).whenNonNull().to(factory::setAddresses);
+            map.from(consumer::getName).whenNonNull().to(factory::setId);
+            map.from(consumer::getAddresses).whenNonNull().to(factory::setEndpoints);
             map.from(consumer::isBind).to(factory::setBind);
             map.from(consumer::getType).to(factory::setSocketType);
         }
