@@ -1,5 +1,6 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import org.springframework.beans.factory.ObjectProvider;
@@ -11,7 +12,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.util.CollectionUtils;
 import org.zeromq.ZContext;
 
 /**
@@ -69,26 +69,20 @@ public class ZmqAutoConfiguration {
                                        ZContext zContext,
                                        ZmqProperties properties) {
             ZmqProperties.Template templateConfig = properties.getTemplate();
-            ZmqProperties.Template.Producer producer = templateConfig.getProducer();
+            ZmqProducer producer = templateConfig.getProducer();
 
-            // Create template with all configuration parameters
+            // Create a template with all configuration parameters
             ZmqTemplate template = new ZmqTemplate(
                     zContext,
+                    producer,
                     templateConfig.getSocketHwm(),
                     templateConfig.getSocketSendBuffer(),
-                    producer.getType(),
-                    producer.isBind()
+                    properties.getLinger()
             );
 
             // Set socket endpoints
-            String defaultSocket = templateConfig.getDefaultSocket();
-            template.setDefaultId(defaultSocket);
-            if (!CollectionUtils.isEmpty(producer.getAddresses())) {
-                template.setEndpoints(producer.getAddresses());
-                if (defaultSocket == null) {
-                    template.setDefaultId(producer.getAddresses().get(0));
-                }
-            }
+            String defaultSocket = templateConfig.getDefaultEndpoint();
+            template.setDefaultEndpointName(defaultSocket);
 
             // Apply additional configuration
             configurer.configure(template, zContext);

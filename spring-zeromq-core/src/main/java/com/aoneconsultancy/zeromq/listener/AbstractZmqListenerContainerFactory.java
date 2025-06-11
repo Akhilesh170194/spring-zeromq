@@ -8,7 +8,6 @@ import com.aoneconsultancy.zeromq.support.micrometer.ZmqListenerObservationConve
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
@@ -78,16 +77,13 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
     protected Long batchTimeout = 1000L;
 
     @Setter
-    protected TimeUnit batchTimeoutUnit = TimeUnit.MILLISECONDS;
-
-    @Setter
     protected Integer recvHwm = 1000;
 
     @Setter
     protected Integer socketRecvBuffer = 1024;
 
     @Setter
-    protected Long socketReconnectInterval = 5000L;
+    protected Integer socketReconnectInterval = 5000;
 
     @Setter
     protected Long socketBackoff = 1000L;
@@ -140,16 +136,15 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(getObservationEnabled(), instance::setObservationEnabled)
                 .acceptIfNotNull(this.observationConvention, instance::setObservationConvention)
                 .acceptIfNotNull(this.concurrency, instance::setConcurrency)
-                .acceptIfNotNull(this.recvHwm, instance::setRecvHwm)
                 .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 .acceptIfNotNull(this.batchSize, instance::setBatchSize)
                 .acceptIfNotNull(this.batchTimeout, instance::setBatchReceiveTimeout)
-                .acceptIfNotNull(this.batchTimeoutUnit, instance::setBatchTimeOutUnit)
                 .acceptIfNotNull(this.consumerBatchEnabled, instance::setConsumerBatchEnabled)
                 .acceptIfNotNull(this.messageConverter, instance::setMessageConverter)
                 .acceptIfNotNull(this.errorHandler, instance::setErrorHandler)
                 .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 .acceptIfNotNull(this.socketRecvBuffer, instance::setSocketRecvBuffer)
+                .acceptIfNotNull(this.recvHwm, instance::setRecvHwm)
                 .acceptIfNotNull(this.socketReconnectInterval, instance::setSocketReconnectInterval)
                 .acceptIfNotNull(this.socketBackoff, instance::setSocketBackoff);
 

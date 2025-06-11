@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 import org.zeromq.SocketType;
@@ -41,7 +42,10 @@ public class ZmqSocketMonitor implements Closeable {
     private final ZMQ.Socket monitoredSocket;
     private final ZMQ.Socket monitorSocket;
     private final String monitorEndpoint;
+
+    @Getter
     private final AtomicBoolean running = new AtomicBoolean(false);
+
     private final ExecutorService monitorExecutor;
     private final long shutdownTimeout;
     private final int monitorEvents;
@@ -180,7 +184,7 @@ public class ZmqSocketMonitor implements Closeable {
      *
      * @param eventData the raw event data
      */
-    private void processEvent(byte[] eventData) {
+    protected void processEvent(byte[] eventData) {
         // Event data format: [event(2bytes)][value(4bytes)][endpoint(variable)]
         ByteBuffer buffer = ByteBuffer.wrap(eventData);
 
@@ -225,7 +229,7 @@ public class ZmqSocketMonitor implements Closeable {
      * @param eventType the event type
      * @return a human-readable name for the event type
      */
-    private String getEventName(int eventType) {
+    protected String getEventName(int eventType) {
         return switch (eventType) {
             case EVENT_CONNECTED -> "CONNECTED";
             case EVENT_CONNECT_DELAYED -> "CONNECT_DELAYED";

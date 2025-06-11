@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
@@ -49,9 +50,9 @@ public class ZmqTemplateTest {
         // Setup ZContext to return our mock socket
         when(mockContext.createSocket(any(SocketType.class))).thenReturn(mockSocket);
 
-        template = new ZmqTemplate(mockContext);
+        template = new ZmqTemplate(mockContext, new ZmqProducer());
         template.setMessageConverter(mockMessageConverter);
-        template.setDefaultId(testAddress);
+        template.setDefaultEndpointName(testAddress);
     }
 
     @Test
@@ -167,11 +168,11 @@ public class ZmqTemplateTest {
     @Test
     void testDestroy() {
         // Create a real ZmqTemplate with a mock context
-        ZmqTemplate realTemplate = new ZmqTemplate(mockContext);
+        ZmqTemplate realTemplate = new ZmqTemplate(mockContext, new ZmqProducer());
 
         // Send a message to create a socket
         when(mockSocket.send(any(byte[].class), anyInt())).thenReturn(true);
-        realTemplate.setDefaultId(testAddress);
+        realTemplate.setDefaultEndpointName(testAddress);
         realTemplate.sendBytes(testPayload);
 
         // Act

@@ -68,7 +68,7 @@ public class PullZmqSocketListenerContainerFactory extends AbstractZmqListenerCo
         if (Boolean.TRUE.equals(this.consumerBatchEnabled)) {
             instance.setConsumerBatchEnabled(true);
         }
-        // Set the addresses list if available
+        // Set the endpoints list if available
         if (this.endpoints != null && !this.endpoints.isEmpty()) {
             instance.setEndpoints(this.endpoints);
         }

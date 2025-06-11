@@ -1,5 +1,7 @@
 package com.aoneconsultancy.zeromq.core;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumer;
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.ActiveObjectCounter;
 import com.aoneconsultancy.zeromq.support.ConsumerCancelledException;
@@ -32,13 +34,12 @@ import zmq.ZError;
 @Slf4j
 public class BlockingQueueConsumer {
 
+    @Getter
+    private ZmqConsumer consumer;
+
     // Configuration properties
-    @Getter
-    private final String id;
-    private final SocketType socketType;
-    @Getter
-    private final String endpoint;
-    private final int highWaterMark;
+    @Setter
+    private int highWaterMark;
     @Setter
     private long shutdownTimeout;
     @Setter
@@ -48,7 +49,7 @@ public class BlockingQueueConsumer {
     @Setter
     private int socketRecvBuffer = 1024;
     @Setter
-    private long socketReconnectInterval = 5000;
+    private int socketReconnectInterval = 5000;
     @Setter
     private long socketBackoff = 100L;
     @Setter
@@ -56,7 +57,7 @@ public class BlockingQueueConsumer {
     @Setter
     private boolean bind;
 
-    // ZeroMQ related fields
+    // ZeroMQ-related fields
     private final ZContext context;
     private ZMQ.Socket socket;
     private ZmqSocketMonitor socketMonitor;
@@ -80,32 +81,15 @@ public class BlockingQueueConsumer {
      * Create a new ZmqMessageConsumer with the given parameters.
      *
      * @param context             the ZeroMQ context
-     * @param endpoint            the address to connect to
-     * @param bufferSize          the high-water mark for the socket
+     * @param consumer            the endpoint details to connect and consume the message from
+     * @param sendHwm          the high-water mark for the socket
      * @param activeObjectCounter the counter to track active objects
      */
     public BlockingQueueConsumer(ZContext context,
                                  ActiveObjectCounter<BlockingQueueConsumer> activeObjectCounter,
-                                 String endpoint,
-                                 int bufferSize) {
-        this(null, context, activeObjectCounter, endpoint, bufferSize, SocketType.PULL, false);
-    }
-
-    /**
-     * Create a new ZmqMessageConsumer with the given parameters and ID.
-     *
-     * @param id                  the consumer ID (can be null)
-     * @param context             the ZeroMQ context
-     * @param activeObjectCounter the counter to track active objects
-     * @param endpoint            the address to connect to
-     * @param bufferSize          the high-water mark for the socket
-     */
-    public BlockingQueueConsumer(String id,
-                                 ZContext context,
-                                 ActiveObjectCounter<BlockingQueueConsumer> activeObjectCounter,
-                                 String endpoint,
-                                 int bufferSize) {
-        this(id, context, activeObjectCounter, endpoint, bufferSize, SocketType.PULL, false);
+                                 ZmqConsumer consumer,
+                                 int sendHwm) {
+        this(context, activeObjectCounter, consumer, 1024, sendHwm, false);
     }
 
     /**
@@ -114,41 +98,37 @@ public class BlockingQueueConsumer {
      * @param id                  the consumer ID (can be null)
      * @param context             the ZeroMQ context
      * @param activeObjectCounter the counter to track active objects
-     * @param endpoint            the address to connect to
+     * @param consumer            the address to connect to
      * @param bufferSize          the high-water mark for the socket
-     * @param socketType          the type of socket to create
      * @param sendAcknowledgement whether to send an acknowledgement message back to the broker
      */
-    public BlockingQueueConsumer(String id,
-                                 ZContext context,
+    public BlockingQueueConsumer(ZContext context,
                                  ActiveObjectCounter<BlockingQueueConsumer> activeObjectCounter,
-                                 String endpoint,
+                                 ZmqConsumer consumer,
                                  int bufferSize,
-                                 SocketType socketType,
+                                 int revHwm,
                                  boolean sendAcknowledgement) {
 
         Assert.notNull(context, "ZContext cannot be null");
         Assert.notNull(activeObjectCounter, "ActiveObjectCounter cannot be null");
-        Assert.notNull(endpoint, "Address cannot be null");
+        Assert.notEmpty(consumer.getAddresses(), "Address cannot be null");
 
-        this.id = id != null ? id : "zmq-consumer-" + System.currentTimeMillis();
-        this.queue = new LinkedBlockingQueue<>(bufferSize > 0 ? bufferSize : 1024);
+        this.queue = new LinkedBlockingQueue<>(revHwm > 0 ? revHwm : 1000);
         this.shutdownTimeout = 5000; // Default 5 seconds
 
         this.pullerExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread thread = new Thread(r, "zmq-puller-" + this.id);
+            Thread thread = new Thread(r, consumer.getName());
             thread.setDaemon(true);
             return thread;
         });
 
         this.context = context;
-        this.endpoint = endpoint;
-        this.socketType = socketType;
-        this.highWaterMark = bufferSize;
+        this.highWaterMark = revHwm;
         this.activeObjectCounter = activeObjectCounter;
+        this.socketRecvBuffer = bufferSize;
 
         if (log.isDebugEnabled()) {
-            log.debug("Created consumer {} with address {}", this, endpoint);
+            log.debug("Created consumer {} with endpoints {}", this, consumer.getAddresses());
         }
     }
 
@@ -229,8 +209,8 @@ public class BlockingQueueConsumer {
                 return;
             }
 
-            log.debug("Initializing socket for {} with address {}", this, this.endpoint);
-            this.socket = context.createSocket(this.socketType);
+            log.debug("Initializing socket for {} with addresses {}", this, this.consumer.getAddresses());
+            this.socket = context.createSocket(this.consumer.getType());
 
             // Set socket options
             this.socket.setRcvHWM(this.highWaterMark);
@@ -239,12 +219,10 @@ public class BlockingQueueConsumer {
             if (this.socketRecvBuffer > 0) {
                 this.socket.setReceiveBufferSize(this.socketRecvBuffer);
             }
-
             // Set the reconnect interval if configured
             if (this.socketReconnectInterval > 0) {
                 this.socket.setReconnectIVL(this.socketReconnectInterval);
             }
-
             if (this.socketLinger > 0) {
                 this.socket.setLinger(this.socketLinger);
             }
@@ -255,7 +233,7 @@ public class BlockingQueueConsumer {
                 this.socketMonitor = new ZmqSocketMonitor(
                         this.context,
                         this.socket,
-                        this.id,
+                        this.consumer.getName(),
                         this.socketEventListener
                 );
 
@@ -273,19 +251,21 @@ public class BlockingQueueConsumer {
 
             // Connect the socket
             boolean connected;
-            if (this.bind) {
-                connected = this.socket.bind(this.endpoint);
-            } else {
-                connected = this.socket.connect(this.endpoint);
+            for (String endpoint : this.consumer.getAddresses()) {
+                if (this.bind) {
+                    connected = this.socket.bind(endpoint);
+                } else {
+                    connected = this.socket.connect(endpoint);
+                }
+                if (!connected) {
+                    int errorCode = this.socket.errno();
+                    String errorMsg = ZError.toString(errorCode);
+                    log.error("Failed to connect/bind socket for {} to {}: {}", this, endpoint, errorMsg);
+                }
+                if (log.isDebugEnabled()) {
+                    log.debug("Successfully connected/bound socket for {} to {}", this, endpoint);
+                }
             }
-            if (!connected) {
-                int errorCode = this.socket.errno();
-                String errorMsg = ZError.toString(errorCode);
-                log.error("Failed to connect socket for {} to {}: {}", this, this.endpoint, errorMsg);
-                throw new ZmqException("Failed to connect socket: " + errorMsg);
-            }
-
-            log.debug("Successfully connected/bound socket for {} to {}", this, this.endpoint);
         } catch (Exception e) {
             log.error("Error connecting ZeroMQ socket: {}", e.getMessage(), e);
             throw new ZmqException("Error connecting ZeroMQ socket: " + e.getMessage(), e);
@@ -405,7 +385,7 @@ public class BlockingQueueConsumer {
     /**
      * Stop the consumer.
      */
-    public void stop() {
+    private void close() {
         this.lifecycleLock.lock();
         try {
             if (!isActive()) {
@@ -473,7 +453,7 @@ public class BlockingQueueConsumer {
             byte[] data = this.socket.recv();  // Blocking call
 
             if (data != null) {
-                this.socketEventListener.getStats(this.id).recordMessageReceived(data.length);
+                this.socketEventListener.getStats(this.consumer.getName()).recordMessageReceived(data.length);
 
                 if (log.isDebugEnabled()) {
                     log.debug("Received message for {}: {} bytes", this, data.length);
@@ -485,31 +465,31 @@ public class BlockingQueueConsumer {
             // If data is null in blocking mode, this usually signals a serious error
             int errorCode = socket.errno();
             log.warn("Error receiving message. errno: {} ({})", errorCode, ZError.toString(errorCode));
-            this.socketEventListener.getStats(this.id).recordError();
+            this.socketEventListener.getStats(this.consumer.getName()).recordError();
 
             if (errorCode == ZError.ETERM) {
-                log.error("ZeroMQ context was terminated for {}", this.id);
+                log.error("ZeroMQ context was terminated for {}", this.consumer.getName());
                 this.active.set(false);
             }
 
         } catch (ZMQException e) {
-            this.socketEventListener.getStats(this.id).recordError();
+            this.socketEventListener.getStats(this.consumer.getName()).recordError();
 
             int errorCode = e.getErrorCode();
             String errorName = ZError.toString(errorCode);
 
             if (errorCode == ZError.EINTR) {
                 Thread.currentThread().interrupt();
-                log.warn("Thread interrupted during recv() for {}: {} ({})", this.id, errorCode, errorName);
+                log.warn("Thread interrupted during recv() for {}: {} ({})", this.consumer.getName(), errorCode, errorName);
             } else {
-                log.error("ZMQException in recv() for {}: {} ({})", this.id, errorCode, errorName, e);
+                log.error("ZMQException in recv() for {}: {} ({})", this.consumer.getName(), errorCode, errorName, e);
                 throw new ZmqException("ZMQ error while receiving", e);
             }
 
         } catch (Exception e) {
-            this.socketEventListener.getStats(this.id).recordError();
+            this.socketEventListener.getStats(this.consumer.getName()).recordError();
 
-            log.error("Unexpected error in recv() for {}: {}", this.id, e.getMessage(), e);
+            log.error("Unexpected error in recv() for {}: {}", this.consumer.getName(), e.getMessage(), e);
             throw new ZmqException("Unexpected error while receiving", e);
         }
 
@@ -593,11 +573,11 @@ public class BlockingQueueConsumer {
     /**
      * Close the socket and release resources.
      */
-    public void close() {
+    public void stop() {
         this.lifecycleLock.lock();
         try {
             // First stop all processing
-            stop();
+            close();
 
             // Clear any pending messages
             int remainingMessages = this.queue.size();
@@ -642,10 +622,8 @@ public class BlockingQueueConsumer {
 
     @Override
     public String toString() {
-        return String.format("ZmqMessageConsumer[id=%s, address=%s, socketType=%s, active=%s, queueSize=%d/%d]",
-                this.id,
-                this.endpoint,
-                this.socketType,
+        return String.format("ZmqMessageConsumer[consumer=%s, active=%s, queueSize=%d/%d]",
+                this.consumer,
                 this.active.get(),
                 this.queue.size(),
                 this.queue.remainingCapacity() + this.queue.size());

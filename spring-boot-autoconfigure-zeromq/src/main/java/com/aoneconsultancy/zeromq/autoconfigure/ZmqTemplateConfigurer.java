@@ -16,6 +16,8 @@
 
 package com.aoneconsultancy.zeromq.autoconfigure;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumer;
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.support.ZmqException;
@@ -75,8 +77,8 @@ public class ZmqTemplateConfigurer {
 
         // Configure a template with properties from the new structure
         ZmqProperties.Template templateConfig = this.zmqProperties.getTemplate();
-        ZmqProperties.Template.Producer producer = templateConfig.getProducer();
-        ZmqProperties.Listener.Consumer consumer = this.zmqProperties.getListener().getConsumer();
+        ZmqProducer producer = templateConfig.getProducer();
+        ZmqConsumer consumer = this.zmqProperties.getListener().getConsumer();
 
         // Validate socket type compatibility
         if (producer != null && consumer != null) {
@@ -92,14 +94,14 @@ public class ZmqTemplateConfigurer {
         map.from(templateConfig.getRetryDelay()).to(template::setRetryDelay);
         map.from(templateConfig.isBackpressureEnabled()).to(template::setBackpressureEnabled);
 
-        // Set default address if configured
-        if (templateConfig.getDefaultSocket() != null) {
-            template.setDefaultId(templateConfig.getDefaultSocket());
+        // Set the default address if configured
+        if (templateConfig.getDefaultEndpoint() != null) {
+            template.setDefaultEndpointName(templateConfig.getDefaultEndpoint());
         }
 
-        // If producer has addresses, use the first one as default if not already set
-        if (producer != null && !producer.getAddresses().isEmpty() && template.getDefaultId() == null) {
-            template.setDefaultId(producer.getAddresses().get(0));
+        // If the producer has endpoints, use the first one as default if not already set
+        if (producer != null && template.getDefaultEndpointName() == null) {
+            template.setDefaultEndpointName(producer.getName());
         }
     }
 }

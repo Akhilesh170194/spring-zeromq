@@ -33,7 +33,7 @@ public interface MessageListenerContainer extends SmartLifecycle, InitializingBe
     void setMessageConverter(MessageConverter messageConverter);
 
     /**
-     * Set the socket addresses to connect to.
+     * Set the socket endpoints to connect to.
      *
      * @param endpoints the socket address
      */

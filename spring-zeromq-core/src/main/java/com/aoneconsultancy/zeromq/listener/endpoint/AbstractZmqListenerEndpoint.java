@@ -70,12 +70,11 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     private BeanResolver beanResolver;
 
     @Setter
-    private List<String> addresses;
+    private List<String> endpoints;
 
-    @Override
     @Nullable
-    public List<String> getAddresses() {
-        return addresses != null && !addresses.isEmpty() ? addresses : List.of();
+    public List<String> getEndpoints() {
+        return endpoints != null && !endpoints.isEmpty() ? endpoints : List.of();
     }
 
     @Override
@@ -90,8 +89,8 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
 
     @Override
     public void setupListenerContainer(MessageListenerContainer container) {
-        if (this.addresses != null) {
-            container.setEndpoints(this.addresses);
+        if (this.endpoints != null) {
+            container.setEndpoints(this.endpoints);
         }
 
         if (this.socketType != null) {
@@ -140,7 +139,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     protected StringBuilder getEndpointDescription() {
         StringBuilder result = new StringBuilder();
         return result.append(getClass().getSimpleName()).append("[").append(this.id).
-                append("] addresses='").append(this.addresses).
+                append("] endpoints='").append(this.endpoints).
                 append("' | socketType='").append(this.socketType).
                 append("' | concurrency='").append(this.concurrency).
                 append("' | batchListener='").append(this.consumerBatchEnabled).append("'");

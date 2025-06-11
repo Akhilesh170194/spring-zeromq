@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.aoneconsultancy.zeromq.annotation.EnableZmq;
 import com.aoneconsultancy.zeromq.annotation.ZmqListener;
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.listener.PullZmqSocketListenerContainerFactory;
@@ -36,8 +37,8 @@ public class ZmqIntegrationTest {
 
         @Bean
         public ZmqTemplate zmqTemplate(ZContext zContext) {
-            ZmqTemplate template = new ZmqTemplate(zContext);
-            template.setDefaultId(TEST_ADDRESS);
+            ZmqTemplate template = new ZmqTemplate(zContext, new ZmqProducer());
+            template.setDefaultEndpointName(TEST_ADDRESS);
             return template;
         }
 
@@ -57,7 +58,7 @@ public class ZmqIntegrationTest {
         private final CountDownLatch latch = new CountDownLatch(1);
         private final AtomicReference<String> receivedMessage = new AtomicReference<>();
 
-        @ZmqListener(addresses = TEST_ADDRESS)
+        @ZmqListener(endpoints = TEST_ADDRESS)
         public void handleMessage(Message message) {
             byte[] body = message.getBody();
             if (body != null) {

@@ -1,12 +1,13 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumer;
+import com.aoneconsultancy.zeromq.config.ZmqProducer;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.zeromq.SocketType;
 
 /**
  * Configuration properties for ZeroMQ integration.
@@ -172,7 +173,7 @@ public class ZmqProperties {
         /**
          * Interval in ms for reconnection attempts
          */
-        private long socketReconnectInterval = 5000;
+        private int socketReconnectInterval = 5000;
 
         /**
          * Backoff time between failed polls
@@ -187,38 +188,8 @@ public class ZmqProperties {
         /**
          * Consumer configurations
          */
-        private Consumer consumer = new Consumer();
+        private ZmqConsumer consumer = new ZmqConsumer();
 
-        /**
-         * Consumer configuration
-         */
-        @Data
-        public static class Consumer {
-            /**
-             * Name of the consumer
-             */
-            private String name = "workerPullConsumer";
-
-            /**
-             * Type of socket (SUB, PULL, etc.)
-             */
-            private SocketType type = SocketType.PULL;
-
-            /**
-             * Whether to bind or connect the socket
-             */
-            private boolean bind = false;
-
-            /**
-             * List of addresses for the socket
-             */
-            private List<String> addresses = List.of("tcp://localhost:5555");
-
-            /**
-             * Topics to subscribe to (for SUB sockets)
-             */
-            private List<String> topics = new ArrayList<>();
-        }
     }
 
     /**
@@ -229,7 +200,7 @@ public class ZmqProperties {
         /**
          * Default socket to use
          */
-        private String defaultSocket;
+        private String defaultEndpoint;
 
         /**
          * Timeout for send in ms
@@ -264,33 +235,8 @@ public class ZmqProperties {
         /**
          * Producer configurations
          */
-        private Producer producer = new Producer();
+        private ZmqProducer producer = new ZmqProducer();
 
-        /**
-         * Producer configuration
-         */
-        @Data
-        public static class Producer {
-            /**
-             * Name of the producer
-             */
-            private String name = "workerPushProducer";
-
-            /**
-             * Type of socket (PUB, PUSH, etc.)
-             */
-            private SocketType type = SocketType.PUSH;
-
-            /**
-             * Whether to bind or connect the socket
-             */
-            private boolean bind = false;
-
-            /**
-             * List of addresses for the socket
-             */
-            private List<String> addresses = List.of("tcp://localhost:5555");
-        }
     }
 
     /**

@@ -22,12 +22,12 @@ public interface ZmqListenerEndpoint {
     String getId();
 
     /**
-     * Return the addresses of this endpoint, if any.
+     * Return the endpoints of this endpoint, if any.
      *
      * @return the address of this endpoint, or null
      */
     @Nullable
-    List<String> getAddresses();
+    List<String> getEndpoints();
 
     /**
      * Return the error handler of this endpoint, if any.

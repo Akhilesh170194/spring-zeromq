@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
@@ -90,7 +89,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     protected int socketRecvBuffer = 1024;
 
     @Setter
-    protected long socketReconnectInterval = 5000;
+    protected int socketReconnectInterval = 5000;
 
     @Setter
     protected long socketBackoff = 100;
@@ -129,10 +128,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     protected int batchSize = 1;
 
     @Setter
-    private Long batchReceiveTimeout;
-
-    @Setter
-    private TimeUnit batchTimeOutUnit;
+    private Long batchReceiveTimeout = 0L;
 
     @Setter
     private String listenerId;

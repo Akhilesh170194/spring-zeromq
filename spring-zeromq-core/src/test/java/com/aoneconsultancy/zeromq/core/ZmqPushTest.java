@@ -59,7 +59,7 @@ public class ZmqPushTest {
         List<String> addresses = List.of(testAddress, "tcp://localhost:5556");
 
         // Act
-        zmqPush = new ZmqPush(mockContext, SocketType.PUSH, true, addresses, testHwm, testSendBufferSize);
+        zmqPush = new ZmqPush(mockContext, SocketType.PUSH, true, addresses, testHwm, testSendBufferSize, 0);
 
         // Assert
         verify(mockContext).createSocket(SocketType.PUSH);
@@ -75,7 +75,7 @@ public class ZmqPushTest {
         List<String> addresses = List.of(testAddress);
 
         // Act
-        zmqPush = new ZmqPush(mockContext, SocketType.PUSH, false, addresses, testHwm, testSendBufferSize);
+        zmqPush = new ZmqPush(mockContext, SocketType.PUSH, false, addresses, testHwm, testSendBufferSize, 0);
 
         // Assert
         verify(mockContext).createSocket(SocketType.PUSH);

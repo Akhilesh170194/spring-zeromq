@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,7 +71,6 @@ public class PullZmqMessageListenerContainerTest {
 
         // Set batch-related properties to avoid NullPointerException
         container.setBatchReceiveTimeout(1000L);
-        container.setBatchTimeOutUnit(TimeUnit.MILLISECONDS);
     }
 
     @Test

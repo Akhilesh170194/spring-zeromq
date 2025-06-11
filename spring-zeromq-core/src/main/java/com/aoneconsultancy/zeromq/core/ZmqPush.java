@@ -2,6 +2,7 @@ package com.aoneconsultancy.zeromq.core;
 
 import java.util.List;
 import lombok.EqualsAndHashCode;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.zeromq.SocketType;
@@ -17,22 +18,26 @@ import org.zeromq.ZMQ;
 @EqualsAndHashCode
 public class ZmqPush {
 
+    @Setter
+    private String name;
+
     private final ZContext context;
     private final ZMQ.Socket socket;
     private final SocketType socketType;
     private final boolean bind;
     private final List<String> addresses;
     private final int sendBufferSize;
+    private final int linger;
 
     /**
      * Create a new ZmqPush with the given parameters.
      *
      * @param context    the ZeroMQ context
-     * @param address    the address to bind to
-     * @param bufferSize the high water mark for the socket
+     * @param endpoint    the endpoint to bind to
+     * @param sendHwm the high water mark for the socket
      */
-    public ZmqPush(ZContext context, String address, int bufferSize) {
-        this(context, SocketType.PUSH, true, List.of(address), bufferSize, 1024);
+    public ZmqPush(ZContext context, String endpoint, int sendHwm) {
+        this(context, SocketType.PUSH, true, List.of(endpoint), sendHwm, 1024, 0);
     }
 
     /**
@@ -41,29 +46,30 @@ public class ZmqPush {
      * @param context        the ZeroMQ context
      * @param socketType     the type of socket to create
      * @param bind           whether to bind or connect the socket
-     * @param addresses      the addresses to bind/connect to
+     * @param endpoints      the endpoints to bind/connect to
      * @param hwm            the high water mark for the socket
      * @param sendBufferSize the send buffer size for the socket
      */
-    public ZmqPush(ZContext context, SocketType socketType, boolean bind, List<String> addresses,
-                   int hwm, int sendBufferSize) {
+    public ZmqPush(ZContext context, SocketType socketType, boolean bind, List<String> endpoints,
+                   int hwm, int sendBufferSize, int linger) {
         this.context = context;
         this.socketType = socketType;
         this.bind = bind;
-        this.addresses = addresses;
+        this.addresses = endpoints;
         this.sendBufferSize = sendBufferSize;
+        this.linger = linger;
 
         this.socket = context.createSocket(socketType);
         this.socket.setHWM(hwm);
-        this.socket.setSendBufferSize(sendBufferSize);
 
-        for (String address : addresses) {
+        for (String endpoint : endpoints) {
             if (bind) {
-                log.debug("Binding to address: {}", address);
-                this.socket.bind(address);
+                log.debug("Binding to endpoint: {}", endpoint);
+                this.socket.bind(endpoint);
             } else {
-                log.debug("Connecting to address: {}", address);
-                this.socket.connect(address);
+                this.socket.setSendBufferSize(sendBufferSize);
+                log.debug("Connecting to endpoint: {}", endpoint);
+                this.socket.connect(endpoint);
             }
         }
     }

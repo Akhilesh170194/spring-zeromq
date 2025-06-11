@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.Advised;
@@ -38,7 +40,10 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.Ordered;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -133,9 +138,13 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
         // Set a unique ID for the endpoint
         endpoint.setId(getEndpointId(listenerAnnotation));
         // Configure the endpoint with the annotation metadata
-        List<String> addresses = List.of(listenerAnnotation.addresses());
-        if (!addresses.isEmpty()) {
-            endpoint.setAddresses(addresses);
+        String[] endpoints = listenerAnnotation.endpoints();
+        List<String> resolvedEndpoints = new ArrayList<>(endpoints.length);
+        for (String ep : endpoints) {
+            resolvedEndpoints.add(resolveExpressionAsString(ep, "endpoints"));
+        }
+        if (!resolvedEndpoints.isEmpty()) {
+            endpoint.setEndpoints(resolvedEndpoints);
         }
         endpoint.setSocketType(listenerAnnotation.socketType());
         endpoint.setConcurrency(listenerAnnotation.concurrency());
@@ -160,10 +169,10 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
 
         for (Method method : multiMethods) {
             Method checked = checkProxy(method, bean);
-            if (AnnotationUtils.findAnnotation(method, ZmqHandler.class).isDefault()) {
+            if (Objects.requireNonNull(AnnotationUtils.findAnnotation(method, ZmqHandler.class)).isDefault()) {
                 final Method toAssert = defaultMethod;
                 Assert.state(toAssert == null, () -> "Only one @ZmqHandler can be marked 'isDefault', found: "
-                        + toAssert.toString() + " and " + method.toString());
+                        + toAssert + " and " + method);
                 defaultMethod = checked;
             }
             checkedMethods.add(checked);
@@ -176,9 +185,13 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
             // Set a unique ID for the endpoint
             endpoint.setId(getEndpointId(classLevelListener));
             // Configure the endpoint with the annotation metadata
-            List<String> addresses = List.of(classLevelListener.addresses());
-            if (!addresses.isEmpty()) {
-                endpoint.setAddresses(addresses);
+            String[] endpointArray = classLevelListener.endpoints();
+            List<String> resolvedEndpoints = new ArrayList<>(endpointArray.length);
+            for (String address : endpointArray) {
+                resolvedEndpoints.add(resolveExpressionAsString(address, "endpoints"));
+            }
+            if (!resolvedEndpoints.isEmpty()) {
+                endpoint.setEndpoints(resolvedEndpoints);
             }
             endpoint.setSocketType(classLevelListener.socketType());
             endpoint.setConcurrency(classLevelListener.concurrency());
@@ -377,19 +390,22 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
                 classLevelListeners.toArray(new ZmqListener[0]));
     }
 
+
     private List<ZmqListener> findListenerAnnotations(AnnotatedElement element) {
-        ZmqListener ann = AnnotationUtils.findAnnotation(element, ZmqListener.class);
-        if (ann == null) {
-            return new ArrayList<>();
-        }
-
-        // Check for @ZmqListeners
-        ZmqListeners anns = AnnotationUtils.findAnnotation(element, ZmqListeners.class);
-        if (anns != null) {
-            return Arrays.asList(anns.value());
-        }
-
-        return List.of(ann);
+        return MergedAnnotations.from(element, MergedAnnotations.SearchStrategy.TYPE_HIERARCHY)
+                .stream(ZmqListener.class)
+                .filter(tma -> {
+                    Object source = tma.getSource();
+                    String name = "";
+                    if (source instanceof Class<?> clazz) {
+                        name = clazz.getName();
+                    }
+                    else if (source instanceof Method method) {
+                        name = method.getDeclaringClass().getName();
+                    }
+                    return !name.contains("$MockitoMock$");
+                })
+                .map(MergedAnnotation::synthesize).toList();
     }
 
     @Override
@@ -404,9 +420,6 @@ public class ZmqListenerAnnotationBeanPostProcessor implements BeanPostProcessor
             return ZmqListenerConfigUtils.ZMQ_LISTENER_ANNOTATION_ENDPOINT_CONTAINER_BEAN_NAME + "#" + this.counter.getAndIncrement();
         }
     }
-
-    // The ZmqHandlerMethodFactoryAdapter inner class has been removed
-    // as we now use direct method invocation instead of Spring Messaging
 
     /**
      * The metadata holder of the class with {@link ZmqListener}

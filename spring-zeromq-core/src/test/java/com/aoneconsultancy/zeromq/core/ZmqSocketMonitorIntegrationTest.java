@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
@@ -18,9 +20,22 @@ public class ZmqSocketMonitorIntegrationTest {
     @BeforeEach
     public void setUp() {
         context = new ZContext();
-        socket = context.createSocket(ZMQ.PULL);
+        socket = context.createSocket(SocketType.PULL);
         socket.bind("tcp://localhost:5555");
         monitor = new ZmqSocketMonitor(context, socket, "test-socket", new DefaultSocketEventListener(null));
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (socket != null) {
+            socket.close();
+        }
+        if (context != null) {
+            context.close();
+        }
+        if (monitor != null) {
+            monitor.close();
+        }
     }
 
     @Test
@@ -28,7 +43,7 @@ public class ZmqSocketMonitorIntegrationTest {
         boolean started = monitor.start();
         assertTrue(started, "Monitor should start successfully");
         monitor.stop();
-        assertFalse(monitor.running.get(), "Monitor should stop successfully");
+        assertFalse(monitor.getRunning().get(), "Monitor should stop successfully");
     }
 
     @Test
@@ -72,6 +87,6 @@ public class ZmqSocketMonitorIntegrationTest {
         boolean started = monitor.start();
         assertTrue(started, "Monitor should start successfully");
         monitor.close();
-        assertFalse(monitor.running.get(), "Monitor should stop after close");
+        assertFalse(monitor.getRunning().get(), "Monitor should stop after close");
     }
 }

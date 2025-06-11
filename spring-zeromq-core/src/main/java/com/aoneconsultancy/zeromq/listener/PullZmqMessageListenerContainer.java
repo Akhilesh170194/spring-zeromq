@@ -110,7 +110,7 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
             if (this.consumers == null) {
                 this.cancellationLock.reset();
 
-                // Calculate the total number of consumers based on concurrency and number of addresses
+                // Calculate the total number of consumers based on concurrency and number of endpoints
                 int totalConsumers = this.concurrency * this.endpoints.size();
                 this.consumers = new HashSet<>(totalConsumers);
                 Set<AsyncMessageProcessingConsumer> processors = new HashSet<>();
@@ -135,8 +135,8 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
 
     private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String id, String address) {
 
-        BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(id, this.context, this.cancellationLock, address,
-                this.recvHwm, this.socketType, taskExecutorSet);
+        BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(this.context, this.cancellationLock,
+                this.consumer, this.socketRecvBuffer, this.recvHwm, false);
         zmqMsgPuller.setShutdownTimeout(getShutdownTimeout());
         zmqMsgPuller.setBind(this.bind);
         zmqMsgPuller.setConsumeDelay(1000);
@@ -187,7 +187,7 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
                     this.stopNow.set(true);
                 }
                 for (BlockingQueueConsumer consumer : this.consumers) {
-                    consumer.close();
+                    consumer.stop();
                     canceledConsumers.add(consumer);
                 }
                 this.consumers.clear();
@@ -217,7 +217,7 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
                             if (log.isWarnEnabled()) {
                                 log.warn("Closing channel for unresponsive consumer: {}", consumer);
                             }
-                            consumer.close();
+                            consumer.stop();
                         }
                     }
                 }
@@ -328,12 +328,12 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
      */
     public void restart(BlockingQueueConsumer oldConsumer) {
 
-        String endpoint = oldConsumer.getEndpoint();
+        String endpoint = oldConsumer.getConsumer().getName();
         String id = oldConsumer.getId();
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {
-                oldConsumer.close();
+                oldConsumer.stop();
                 cancellationLock.release(oldConsumer);
                 // Remove this consumer from the set
                 this.consumers.remove(oldConsumer);
@@ -414,7 +414,7 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
          */
         public void stop() {
             if (this.consumer != null) {
-                this.consumer.close();
+                this.consumer.stop();
             }
         }
 

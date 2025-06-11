@@ -32,7 +32,7 @@ public @interface ZmqListener {
      * The socket address to connect to, e.g. tcp://localhost:5555.
      * If not specified, the default address from properties will be used.
      */
-    @AliasFor("addresses")
+    @AliasFor("endpoints")
     String[] values() default {};
 
     /**
@@ -40,7 +40,7 @@ public @interface ZmqListener {
      * If not specified, the default address from properties will be used.
      */
     @AliasFor("values")
-    String[] addresses() default {};
+    String[] endpoints() default {};
 
     /**
      * The socket type to use.

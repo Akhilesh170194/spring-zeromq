@@ -1,5 +1,6 @@
 package com.aoneconsultancy.zeromq.core.message;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,9 @@ import zmq.io.net.Address;
  */
 @ToString
 @EqualsAndHashCode
-public class Message {
+public class Message implements Serializable {
+
+    private static final long serialVersionUID = -8277590351220605597L;
 
     /**
      * Get the message payload.
