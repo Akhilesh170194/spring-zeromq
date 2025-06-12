@@ -1,9 +1,17 @@
 package com.aoneconsultancy.zeromq.listener;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
 import com.aoneconsultancy.zeromq.core.event.AsyncConsumerStoppedEvent;
 import com.aoneconsultancy.zeromq.core.event.ZmqConsumerFailedEvent;
 import com.aoneconsultancy.zeromq.support.ActiveObjectCounter;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.lang.Nullable;
+import org.zeromq.SocketType;
+import org.zeromq.ZContext;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,12 +24,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.lang.Nullable;
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
 
 @Slf4j
 public class PullZmqMessageListenerContainer extends AbstractMessageListenerContainer {
@@ -39,12 +41,12 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
     }
 
     @Override
-    public void setSocketType(SocketType socketType) {
-        if (socketType != SocketType.PULL) {
-            throw new IllegalArgumentException("SimpleZmqListenerContainer only supports PULL sockets. " +
-                    "For other socket types, extend AbstractZmqListenerContainer and implement the socket-specific logic.");
-        }
-        super.setSocketType(socketType);
+    public void afterPropertiesSet() {
+        org.springframework.util.Assert.notNull(getZmqConsumerProps(), "Zmq Listener Consumer can not be null!");
+        org.springframework.util.Assert.notEmpty(getZmqConsumerProps().getAddresses(),
+                "Zmq Listener Consumer Address can not be empty!");
+        org.springframework.util.Assert.isTrue(getZmqConsumerProps().getType() == SocketType.PULL,
+                "Zmq Socket Type must be of PULL for this container!");
     }
 
     /**
@@ -111,20 +113,14 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
                 this.cancellationLock.reset();
 
                 // Calculate the total number of consumers based on concurrency and number of endpoints
-                int totalConsumers = this.concurrency * this.endpoints.size();
-                this.consumers = new HashSet<>(totalConsumers);
+                this.consumers = new HashSet<>(1);
                 Set<AsyncMessageProcessingConsumer> processors = new HashSet<>();
 
-                // Create consumers for each address
-                for (String endpoint : this.endpoints) {
-                    for (int i = 0; i < this.concurrency; i++) {
-                        String id = "consumer-" + getListenerId() + "-" + i;
-                        AsyncMessageProcessingConsumer consumer = createAsyncZmqConsumer(id, endpoint);
-                        processors.add(consumer);
-                        this.taskExecutor.execute(consumer);
-                        count++;
-                    }
-                }
+                // TODO - we might add support for multiple socket endpoint
+                AsyncMessageProcessingConsumer consumer = createAsyncZmqConsumer(getZmqConsumerProps());
+                processors.add(consumer);
+                this.taskExecutor.execute(consumer);
+
                 waitForConsumersToStart(processors);
             }
         } finally {
@@ -133,12 +129,11 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
         return count;
     }
 
-    private AsyncMessageProcessingConsumer createAsyncZmqConsumer(String id, String address) {
+    private AsyncMessageProcessingConsumer createAsyncZmqConsumer(ZmqConsumerProperties consumerProps) {
 
         BlockingQueueConsumer zmqMsgPuller = new BlockingQueueConsumer(this.context, this.cancellationLock,
-                this.consumer, this.socketRecvBuffer, this.recvHwm, false);
+                consumerProps, this.socketRecvBuffer, this.recvHwm, false);
         zmqMsgPuller.setShutdownTimeout(getShutdownTimeout());
-        zmqMsgPuller.setBind(this.bind);
         zmqMsgPuller.setConsumeDelay(1000);
         zmqMsgPuller.setSocketLinger(this.socketLinger);
         zmqMsgPuller.setSocketRecvBuffer(this.socketRecvBuffer);
@@ -313,23 +308,12 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
     }
 
     /**
-     * Generate a unique consumer ID.
-     *
-     * @return a unique consumer ID
-     */
-    private String generateConsumerId() {
-        return String.valueOf(System.currentTimeMillis() % 10000) + "-" +
-                String.valueOf(System.nanoTime() % 10000);
-    }
-
-    /**
      * Restart this consumer by stopping the old one, creating a new one, and starting it.
      * Similar to Spring AMQP's SimpleMessageListenerContainer.restart() method.
      */
     public void restart(BlockingQueueConsumer oldConsumer) {
 
-        String endpoint = oldConsumer.getConsumer().getName();
-        String id = oldConsumer.getId();
+        ZmqConsumerProperties oldConsumerProps = oldConsumer.getConsumerProps();
         this.consumersLock.lock();
         try {
             if (this.consumers != null) {
@@ -342,7 +326,7 @@ public class PullZmqMessageListenerContainer extends AbstractMessageListenerCont
                     return;
                 }
                 // Create a new AsyncZmqConsumer with the new consumer
-                AsyncMessageProcessingConsumer newAsyncConsumer = createAsyncZmqConsumer(id, endpoint);
+                AsyncMessageProcessingConsumer newAsyncConsumer = createAsyncZmqConsumer(oldConsumerProps);
                 // Start the new consumer
                 getTaskExecutor().execute(newAsyncConsumer);
 

@@ -2,13 +2,10 @@ package com.aoneconsultancy.zeromq.annotation;
 
 import com.aoneconsultancy.zeromq.listener.ZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpointRegistry;
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
+
+import java.lang.annotation.*;
 
 /**
  * Enable ZeroMQ listener annotated endpoints.

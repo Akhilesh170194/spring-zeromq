@@ -1,17 +1,12 @@
 package com.aoneconsultancy.zeromq.core;
 
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.SimpleMessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.ZmqMessageConversionException;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.core.message.ZmqHeaders;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,9 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Helper similar to Spring's {@code RabbitTemplate} for sending
@@ -39,7 +38,7 @@ public class ZmqTemplate implements DisposableBean {
 
     private final Map<String, ZmqPush> pushSockets = new ConcurrentHashMap<>();
 
-    ZmqProducer zmqProducer;
+    ZmqProducerProperties zmqProducerProperties;
 
     /**
      * High water mark for sockets
@@ -109,18 +108,18 @@ public class ZmqTemplate implements DisposableBean {
      *
      * @param context the ZeroMQ context
      */
-    public ZmqTemplate(ZContext context, ZmqProducer producer) {
-        this(context, producer,1000);
+    public ZmqTemplate(ZContext context, ZmqProducerProperties producer) {
+        this(context, producer, 1000);
     }
 
     /**
      * Create a new template with the given context, buffer size, and message converter.
      *
-     * @param context    the ZeroMQ context
-     * @param producer  the producer to connect/bind to
-     * @param sendHwm   the high water mark for sockets
+     * @param context  the ZeroMQ context
+     * @param producer the producer to connect/bind to
+     * @param sendHwm  the high water mark for sockets
      */
-    public ZmqTemplate(ZContext context, ZmqProducer producer, int sendHwm) {
+    public ZmqTemplate(ZContext context, ZmqProducerProperties producer, int sendHwm) {
         this(context, producer, sendHwm, 1024, 0);
     }
 
@@ -128,17 +127,17 @@ public class ZmqTemplate implements DisposableBean {
      * Create a new template with the given context and configuration.
      *
      * @param context          the ZeroMQ context
-     * @param producer  the producer to connect/bind to
+     * @param producer         the producer to connect/bind to
      * @param socketHwm        the high water mark for sockets
      * @param socketSendBuffer the send buffer size for sockets
      */
-    public ZmqTemplate(ZContext context, ZmqProducer producer, int socketHwm, int socketSendBuffer,
+    public ZmqTemplate(ZContext context, ZmqProducerProperties producer, int socketHwm, int socketSendBuffer,
                        int linger) {
         this.context = context;
         this.socketHwm = socketHwm;
         this.socketSendBuffer = socketSendBuffer;
         this.linger = linger;
-        this.zmqProducer = producer;
+        this.zmqProducerProperties = producer;
         addEndpoints(producer);
     }
 
@@ -147,12 +146,20 @@ public class ZmqTemplate implements DisposableBean {
      *
      * @param producer the producer details
      */
-    private void addEndpoints(ZmqProducer producer) {
+    private void addEndpoints(ZmqProducerProperties producer) {
 
-        if(CollectionUtils.isEmpty(producer.getAddresses())) {
+        if (CollectionUtils.isEmpty(producer.getAddresses())) {
             throw new IllegalArgumentException("Endpoints must not be empty");
         }
+        if (defaultEndpointName == null) {
+            defaultEndpointName = producer.getName();
+        }
         ZmqPush pushSocket = new ZmqPush(context, producer.getType(), producer.isBind(), producer.getAddresses(), socketHwm, socketSendBuffer, linger);
+        if (pushSockets.containsKey(producer.getName())) {
+            log.warn("Duplicate PUSH socket endpoint name: {}", producer.getName());
+            pushSocket.close();
+            return;
+        }
         pushSockets.put(producer.getName(), pushSocket);
     }
 
@@ -164,7 +171,7 @@ public class ZmqTemplate implements DisposableBean {
      */
     private ZmqPush getPushSocket(String name) {
         ZmqPush pushSocket = pushSockets.get(name);
-        if(pushSocket == null) {
+        if (pushSocket == null) {
             throw new IllegalStateException("No push socket configured for " + name);
         }
         return pushSocket;
@@ -333,7 +340,7 @@ public class ZmqTemplate implements DisposableBean {
     }
 
     private String getProducerId(String id, int i) {
-        if(id == null) {
+        if (id == null) {
             return DEFAULT_ZMQ_PUSH_ID;
         }
 

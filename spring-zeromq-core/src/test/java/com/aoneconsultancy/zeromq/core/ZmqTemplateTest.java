@@ -1,21 +1,9 @@
 package com.aoneconsultancy.zeromq.core;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +12,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ZmqTemplateTest {
@@ -50,9 +46,11 @@ public class ZmqTemplateTest {
         // Setup ZContext to return our mock socket
         when(mockContext.createSocket(any(SocketType.class))).thenReturn(mockSocket);
 
-        template = new ZmqTemplate(mockContext, new ZmqProducer());
+        // Create a producer with default name "workerPushProducer" and address "tcp://localhost:5555"
+        template = new ZmqTemplate(mockContext, new ZmqProducerProperties());
         template.setMessageConverter(mockMessageConverter);
-        template.setDefaultEndpointName(testAddress);
+        // Use the producer name instead of the address
+        template.setDefaultEndpointName("workerPushProducer");
     }
 
     @Test
@@ -73,8 +71,17 @@ public class ZmqTemplateTest {
         // Arrange
         when(mockSocket.send(any(byte[].class), anyInt())).thenReturn(true);
 
+        // Create a new producer with a different name
+        ZmqProducerProperties secondProducer = new ZmqProducerProperties();
+        secondProducer.setName("secondProducer");
+        secondProducer.setAddresses(List.of("tcp://localhost:5556"));
+
+        // Create a new template with the second producer
+        ZmqTemplate secondTemplate = new ZmqTemplate(mockContext, secondProducer);
+        secondTemplate.setMessageConverter(mockMessageConverter);
+
         // Act
-        boolean result = template.sendBytes("tcp://localhost:5556", testPayload);
+        boolean result = secondTemplate.sendBytes("secondProducer", testPayload);
 
         // Assert
         assertTrue(result);
@@ -156,7 +163,7 @@ public class ZmqTemplateTest {
         Object payload = new Object();
 
         // Act
-        boolean result = template.convertAndSend(testAddress, payload, mockPostProcessor);
+        boolean result = template.convertAndSend("workerPushProducer", payload, mockPostProcessor);
 
         // Assert
         assertTrue(result);
@@ -168,11 +175,11 @@ public class ZmqTemplateTest {
     @Test
     void testDestroy() {
         // Create a real ZmqTemplate with a mock context
-        ZmqTemplate realTemplate = new ZmqTemplate(mockContext, new ZmqProducer());
+        ZmqTemplate realTemplate = new ZmqTemplate(mockContext, new ZmqProducerProperties());
 
         // Send a message to create a socket
         when(mockSocket.send(any(byte[].class), anyInt())).thenReturn(true);
-        realTemplate.setDefaultEndpointName(testAddress);
+        realTemplate.setDefaultEndpointName("workerPushProducer");
         realTemplate.sendBytes(testPayload);
 
         // Act

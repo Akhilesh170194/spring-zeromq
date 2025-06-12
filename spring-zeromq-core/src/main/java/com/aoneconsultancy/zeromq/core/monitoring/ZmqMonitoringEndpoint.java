@@ -1,11 +1,12 @@
 package com.aoneconsultancy.zeromq.core.monitoring;
 
 import com.aoneconsultancy.zeromq.core.DefaultSocketEventListener;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.endpoint.annotation.Selector;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Spring Boot Actuator endpoint for exposing ZeroMQ socket statistics.
@@ -33,9 +34,9 @@ public class ZmqMonitoringEndpoint {
     public Map<String, Object> getStats() {
         Map<String, Object> result = new HashMap<>();
 
-        eventListener.getAllStats().forEach((socketId, stats) -> {
-            Map<String, Object> socketStats = getStatsBySocketId(socketId);
-            result.put(socketId, socketStats);
+        eventListener.getAllStats().forEach((socketName, stats) -> {
+            Map<String, Object> socketStats = getStatsBySocketName(socketName);
+            result.put(socketName, socketStats);
         });
 
         return result;
@@ -44,12 +45,12 @@ public class ZmqMonitoringEndpoint {
     /**
      * Get statistics for a specific ZeroMQ socket.
      *
-     * @param socketId the socket ID
+     * @param socketName the socket name
      * @return statistics for the socket, or null if not found
      */
     @ReadOperation
-    public Map<String, Object> getStatsBySocketId(@Selector String socketId) {
-        ZmqSocketStats stats = eventListener.getStats(socketId);
+    public Map<String, Object> getStatsBySocketName(@Selector String socketName) {
+        ZmqSocketStats stats = eventListener.getStats(socketName);
         if (stats == null) {
             return null;
         }

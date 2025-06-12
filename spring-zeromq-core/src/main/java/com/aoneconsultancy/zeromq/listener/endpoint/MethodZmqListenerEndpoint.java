@@ -6,14 +6,15 @@ import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
 import com.aoneconsultancy.zeromq.listener.adapter.BatchMessagingMessageListenerAdapter;
 import com.aoneconsultancy.zeromq.listener.adapter.MessagingMessageListenerAdapter;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.util.Assert;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * An {@link ZmqListenerEndpoint} implementation for invoking a method

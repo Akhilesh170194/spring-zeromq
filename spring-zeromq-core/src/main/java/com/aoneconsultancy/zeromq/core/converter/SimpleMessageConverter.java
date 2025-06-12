@@ -2,16 +2,12 @@ package com.aoneconsultancy.zeromq.core.converter;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.core.message.ZmqHeaders;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import lombok.Getter;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Getter;
 
 /**
  * Implementation of {@link MessageConverter} that can work with Strings, Serializable

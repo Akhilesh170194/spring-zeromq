@@ -5,11 +5,12 @@ import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
 import com.aoneconsultancy.zeromq.listener.adapter.MultiMethodMessageListenerAdapter;
-import java.lang.reflect.Method;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.util.Assert;
+
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * An {@link ZmqListenerEndpoint} implementation for invoking multiple methods

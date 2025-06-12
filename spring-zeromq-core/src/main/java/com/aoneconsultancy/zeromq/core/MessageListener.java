@@ -1,6 +1,7 @@
 package com.aoneconsultancy.zeromq.core;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
+
 import java.util.List;
 
 public interface MessageListener {

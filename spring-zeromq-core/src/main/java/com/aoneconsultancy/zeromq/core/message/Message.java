@@ -1,13 +1,14 @@
 package com.aoneconsultancy.zeromq.core.message;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 import zmq.io.net.Address;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a ZeroMQ message, consisting of a payload and headers.
@@ -64,6 +65,31 @@ public class Message implements Serializable {
      */
     public Object getMessageProperty(String key) {
         return messageProperties.get(key);
+    }
+
+    /**
+     * Set a message property value.
+     *
+     * @param key   the property key
+     * @param value the property value
+     * @return this message instance for method chaining
+     */
+    public Message setMessageProperty(String key, Object value) {
+        this.messageProperties.put(key, value);
+        return this;
+    }
+
+    /**
+     * Add all message properties from the given map.
+     *
+     * @param properties the message properties to add
+     * @return this message instance for method chaining
+     */
+    public Message addMessageProperties(Map<String, Object> properties) {
+        if (properties != null) {
+            this.messageProperties.putAll(properties);
+        }
+        return this;
     }
 
     /**

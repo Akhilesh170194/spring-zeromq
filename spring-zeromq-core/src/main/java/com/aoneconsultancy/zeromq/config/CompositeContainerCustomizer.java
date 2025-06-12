@@ -1,9 +1,10 @@
 package com.aoneconsultancy.zeromq.config;
 
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
+import org.springframework.util.Assert;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.util.Assert;
 
 public class CompositeContainerCustomizer<C extends MessageListenerContainer> implements ContainerCustomizer<C> {
 

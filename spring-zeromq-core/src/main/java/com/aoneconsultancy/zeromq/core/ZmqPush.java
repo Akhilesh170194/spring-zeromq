@@ -1,6 +1,5 @@
 package com.aoneconsultancy.zeromq.core;
 
-import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.ToString;
@@ -8,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.List;
 
 /**
  * A class that handles pushing messages to a ZeroMQ socket.
@@ -32,9 +33,9 @@ public class ZmqPush {
     /**
      * Create a new ZmqPush with the given parameters.
      *
-     * @param context    the ZeroMQ context
-     * @param endpoint    the endpoint to bind to
-     * @param sendHwm the high water mark for the socket
+     * @param context  the ZeroMQ context
+     * @param endpoint the endpoint to bind to
+     * @param sendHwm  the high water mark for the socket
      */
     public ZmqPush(ZContext context, String endpoint, int sendHwm) {
         this(context, SocketType.PUSH, true, List.of(endpoint), sendHwm, 1024, 0);
@@ -62,12 +63,15 @@ public class ZmqPush {
         this.socket = context.createSocket(socketType);
         this.socket.setHWM(hwm);
 
+        if (!bind) {
+            this.socket.setSendBufferSize(sendBufferSize);
+        }
+
         for (String endpoint : endpoints) {
             if (bind) {
                 log.debug("Binding to endpoint: {}", endpoint);
                 this.socket.bind(endpoint);
             } else {
-                this.socket.setSendBufferSize(sendBufferSize);
                 log.debug("Connecting to endpoint: {}", endpoint);
                 this.socket.connect(endpoint);
             }

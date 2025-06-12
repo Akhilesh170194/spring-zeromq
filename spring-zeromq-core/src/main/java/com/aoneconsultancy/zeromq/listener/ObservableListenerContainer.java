@@ -1,8 +1,7 @@
 package com.aoneconsultancy.zeromq.listener;
 
 import io.micrometer.observation.ObservationRegistry;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanNameAware;
@@ -16,6 +15,9 @@ import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 public abstract class ObservableListenerContainer
         implements MessageListenerContainer, ApplicationContextAware, BeanNameAware, DisposableBean {
@@ -27,17 +29,18 @@ public abstract class ObservableListenerContainer
 
     private final Map<String, String> micrometerTags = new HashMap<>();
 
-    private MicrometerHolder micrometerHolder;
+    protected MicrometerHolder micrometerHolder;
 
     @Setter
-    private boolean micrometerEnabled = true;
+    @Getter
+    protected boolean micrometerEnabled = true;
 
     @Setter
-    private boolean observationEnabled = false;
+    @Getter
+    protected boolean observationEnabled = false;
+
 
     private String beanName = "not.a.Spring.bean";
-
-    private String listenerId;
 
     private volatile boolean contextClosed;
 
@@ -54,10 +57,6 @@ public abstract class ObservableListenerContainer
         if (applicationContext instanceof ConfigurableApplicationContext configurableApplicationContext) {
             configurableApplicationContext.addApplicationListener(new ApplicationClosedListener());
         }
-    }
-
-    protected MicrometerHolder getMicrometerHolder() {
-        return this.micrometerHolder;
     }
 
     /**
@@ -77,7 +76,7 @@ public abstract class ObservableListenerContainer
             if (this.micrometerHolder == null && MICROMETER_PRESENT && this.micrometerEnabled
                     && !this.observationEnabled && this.applicationContext != null) {
 
-                this.micrometerHolder = new MicrometerHolder(this.applicationContext, getListenerId(),
+                this.micrometerHolder = new MicrometerHolder(this.applicationContext, getListenerName(),
                         this.micrometerTags);
             }
         } catch (IllegalStateException e) {
@@ -121,13 +120,8 @@ public abstract class ObservableListenerContainer
      *
      * @return the id (or the container bean name if no id set).
      */
-    public String getListenerId() {
-        return this.listenerId != null ? this.listenerId : this.beanName;
-    }
-
-    @Override
-    public void setListenerId(String listenerId) {
-        this.listenerId = listenerId;
+    public String getListenerName() {
+        return getZmqConsumerProps().getName() != null ? getZmqConsumerProps().getName() : this.beanName;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.aoneconsultancy.zeromq.listener;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
 import com.aoneconsultancy.zeromq.core.DefaultSocketEventListener;
 import com.aoneconsultancy.zeromq.core.MessageListener;
@@ -9,16 +10,8 @@ import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.listener.exception.MessageRejectedWhileStoppingException;
 import com.aoneconsultancy.zeromq.support.ListenerExecutionFailedException;
 import com.aoneconsultancy.zeromq.support.ZmqException;
-import com.aoneconsultancy.zeromq.support.micrometer.ZmqListenerObservationConvention;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessorUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +20,16 @@ import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ErrorHandler;
-import org.zeromq.SocketType;
+import org.springframework.util.StringUtils;
 import org.zeromq.ZContext;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 public abstract class AbstractMessageListenerContainer extends ObservableListenerContainer
@@ -42,6 +43,10 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     protected final Lock lifecycleLock = new ReentrantLock();
 
     @Getter
+    @Setter
+    private ZmqConsumerProperties zmqConsumerProps = new ZmqConsumerProperties();
+
+    @Getter
     private volatile boolean active = false;
 
     @Getter
@@ -51,7 +56,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     private boolean initialized = false;
 
     @Getter
-    private ContainerDelegate delegate = this::actualInvokeListener;
+    private final ContainerDelegate delegate = this::actualInvokeListener;
 
     @Setter
     @Getter
@@ -62,13 +67,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     private MessageListener messageListener;
 
     private Collection<MessagePostProcessor> afterReceivePostProcessors;
-
-    @Setter
-    @Getter
-    protected List<String> endpoints;
-
-    @Setter
-    protected SocketType socketType;
 
     @Setter
     protected ErrorHandler errorHandler;
@@ -94,9 +92,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     @Setter
     protected long socketBackoff = 100;
 
-    @Setter
-    protected boolean bind = false;
-
     @Getter
     // Thread pool for message processing
     protected Executor taskExecutor = new SimpleAsyncTaskExecutor();
@@ -105,22 +100,9 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     @Setter
     protected int concurrency = 1;
 
-    @Nullable
-    @Setter
-    private ZmqListenerObservationConvention observationConvention;
-
     @Setter
     @Getter
     private ApplicationEventPublisher applicationEventPublisher;
-
-    @Setter
-    private boolean micrometerEnabled;
-
-    @Setter
-    private boolean observationEnabled;
-
-    @Setter
-    private ZmqListenerObservationConvention zmqListenerObservationConvention;
 
     @Setter
     private boolean consumerBatchEnabled = false;
@@ -129,9 +111,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
 
     @Setter
     private Long batchReceiveTimeout = 0L;
-
-    @Setter
-    private String listenerId;
 
     @Setter
     protected ZmqSocketMonitor.SocketEventListener socketEventListener = new DefaultSocketEventListener(applicationEventPublisher);
@@ -266,7 +245,6 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
             this.lifecycleLock.lock();
             try {
                 afterPropertiesSet();
-
                 doStart();
             } finally {
                 this.lifecycleLock.unlock();
@@ -283,16 +261,10 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     public void afterPropertiesSet() {
 
         super.afterPropertiesSet();
-        if (this.delegate == null) {
-            throw new IllegalStateException("No message listener specified");
-        }
 
-        if (this.endpoints == null || endpoints.isEmpty()) {
-            throw new IllegalStateException("No address specified");
-        }
         // Initialize the task executor if not provided
-        if (this.taskExecutor == null) {
-            this.taskExecutor = new SimpleAsyncTaskExecutor(getListenerId() + "-");
+        if (this.taskExecutor == null && StringUtils.hasText(getListenerName())) {
+            this.taskExecutor = new SimpleAsyncTaskExecutor(getListenerName() + "-");
             this.taskExecutorSet = true;
         }
 
@@ -307,7 +279,7 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
         this.lifecycleLock.lock();
         try {
             this.active = true;
-            this.active = true;
+            this.running = true;
         } finally {
             this.lifecycleLock.unlock();
         }
@@ -322,13 +294,9 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
     public void stop() {
         try {
             shutdown(null);
+            this.initialized = false;
         } finally {
-            this.lifecycleLock.lock();
-            try {
-                this.active = false;
-            } finally {
-                this.lifecycleLock.unlock();
-            }
+            setNotRunning();
         }
     }
 
@@ -361,7 +329,27 @@ public abstract class AbstractMessageListenerContainer extends ObservableListene
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } finally {
-            this.initialized = false;
+            setNotRunning();
+        }
+    }
+
+    /**
+     * Determine whether this container is currently running, that is, whether it has been started and not stopped yet.
+     *
+     * @see #start()
+     * @see #stop()
+     */
+    @Override
+    public final boolean isRunning() {
+        return this.running;
+    }
+
+    protected void setNotRunning() {
+        this.lifecycleLock.lock();
+        try {
+            this.running = false;
+        } finally {
+            this.lifecycleLock.unlock();
         }
     }
 

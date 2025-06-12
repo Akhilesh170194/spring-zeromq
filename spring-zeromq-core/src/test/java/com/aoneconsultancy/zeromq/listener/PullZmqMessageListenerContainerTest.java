@@ -1,28 +1,11 @@
 package com.aoneconsultancy.zeromq.listener;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.BlockingQueueConsumer;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.message.Message;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,8 +15,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.util.ErrorHandler;
 import org.springframework.util.ReflectionUtils;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PullZmqMessageListenerContainerTest {
@@ -55,8 +47,6 @@ public class PullZmqMessageListenerContainerTest {
 
     private PullZmqMessageListenerContainer container;
 
-    private final String testAddress = "tcp://localhost:5555";
-
     @BeforeEach
     void setUp() {
         container = spy(new PullZmqMessageListenerContainer(mockContext));
@@ -64,8 +54,9 @@ public class PullZmqMessageListenerContainerTest {
         container.setMessageConverter(mockMessageConverter);
         container.setErrorHandler(mockErrorHandler);
         container.setSocketEventListener(mockSocketEventListener);
-        container.setEndpoints(List.of(testAddress));
-        container.setSocketType(SocketType.PULL);
+
+        ZmqConsumerProperties zmqConsumerProps = new ZmqConsumerProperties();
+        container.setZmqConsumerProps(zmqConsumerProps);
         container.setConcurrency(1);
         container.setTaskExecutor(new SimpleAsyncTaskExecutor());
 

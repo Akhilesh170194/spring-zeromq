@@ -6,9 +6,6 @@ import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.support.micrometer.ZmqListenerObservationConvention;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
-import java.util.Arrays;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +17,10 @@ import org.springframework.integration.JavaUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ErrorHandler;
 import org.zeromq.ZContext;
+
+import java.util.Arrays;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Factory for creating {@link MessageListenerContainer} instances.
@@ -134,7 +135,6 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(this.afterReceivePostProcessors, instance::setAfterReceivePostProcessors)
                 .acceptIfNotNull(getMicrometerEnabled(), instance::setMicrometerEnabled)
                 .acceptIfNotNull(getObservationEnabled(), instance::setObservationEnabled)
-                .acceptIfNotNull(this.observationConvention, instance::setObservationConvention)
                 .acceptIfNotNull(this.concurrency, instance::setConcurrency)
                 .acceptIfNotNull(this.socketEventListener, instance::setSocketEventListener)
                 .acceptIfNotNull(this.batchSize, instance::setBatchSize)
@@ -149,7 +149,6 @@ public abstract class AbstractZmqListenerContainerFactory<T extends AbstractMess
                 .acceptIfNotNull(this.socketBackoff, instance::setSocketBackoff);
 
         if (endpoint != null) { // Set endpoint ID and batch listener
-            instance.setListenerId(endpoint.getId());
             if (endpoint.getConsumerBatchEnabled() == null) {
                 endpoint.setConsumerBatchEnabled(this.consumerBatchEnabled);
             }

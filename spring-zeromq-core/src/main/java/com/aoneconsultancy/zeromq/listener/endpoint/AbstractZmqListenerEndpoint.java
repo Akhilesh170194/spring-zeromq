@@ -1,11 +1,11 @@
 package com.aoneconsultancy.zeromq.listener.endpoint;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,31 +22,30 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.zeromq.SocketType;
 
+import java.util.List;
+
 /**
  * Base class for {@link ZmqListenerEndpoint} implementations.
  * Provides common properties and methods for endpoints.
  */
 @Slf4j
-@Getter
-@Setter
 public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint, BeanFactoryAware {
-
-    private String id;
 
     @Getter
     @Setter
     private Boolean consumerBatchEnabled;
 
     @Nullable
-    private Integer concurrency;
-
+    @Setter
     @Getter
-    private SocketType socketType;
+    private Integer concurrency;
 
     @Nullable
     private ZmqListenerErrorHandler errorHandler;
 
     @Nullable
+    @Setter
+    @Getter
     private MessageConverter messageConverter;
 
     @Nullable
@@ -55,6 +54,7 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     private ZmqSocketMonitor.SocketEventListener socketEventListener;
 
     @Setter
+    @Getter
     private TaskExecutor taskExecutor;
 
     @Getter
@@ -69,12 +69,11 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
     @Getter
     private BeanResolver beanResolver;
 
-    @Setter
-    private List<String> endpoints;
+    @Getter
+    private ZmqConsumerProperties zmqConsumerProps;
 
-    @Nullable
-    public List<String> getEndpoints() {
-        return endpoints != null && !endpoints.isEmpty() ? endpoints : List.of();
+    public void setZmqConsumerProps(String name, List<String> endpoints, boolean bind, SocketType type) {
+        this.zmqConsumerProps = ZmqConsumerProperties.builder().name(name).addresses(endpoints).bind(bind).type(type).build();
     }
 
     @Override
@@ -89,12 +88,9 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
 
     @Override
     public void setupListenerContainer(MessageListenerContainer container) {
-        if (this.endpoints != null) {
-            container.setEndpoints(this.endpoints);
-        }
 
-        if (this.socketType != null) {
-            container.setSocketType(this.socketType);
+        if (this.zmqConsumerProps != null) {
+            container.setZmqConsumerProps(this.zmqConsumerProps);
         }
 
         if (this.concurrency != null) {
@@ -138,9 +134,9 @@ public abstract class AbstractZmqListenerEndpoint implements ZmqListenerEndpoint
      */
     protected StringBuilder getEndpointDescription() {
         StringBuilder result = new StringBuilder();
-        return result.append(getClass().getSimpleName()).append("[").append(this.id).
-                append("] endpoints='").append(this.endpoints).
-                append("' | socketType='").append(this.socketType).
+        return result.append(getClass().getSimpleName()).append("[").append(this.zmqConsumerProps.getName()).
+                append("] endpoints='").append(this.zmqConsumerProps.getAddresses()).
+                append("' | socketType='").append(this.zmqConsumerProps.getType()).
                 append("' | concurrency='").append(this.concurrency).
                 append("' | batchListener='").append(this.consumerBatchEnabled).append("'");
     }

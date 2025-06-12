@@ -1,13 +1,14 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
-import com.aoneconsultancy.zeromq.config.ZmqConsumer;
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
-import java.util.ArrayList;
-import java.util.List;
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Configuration properties for ZeroMQ integration.
@@ -188,7 +189,7 @@ public class ZmqProperties {
         /**
          * Consumer configurations
          */
-        private ZmqConsumer consumer = new ZmqConsumer();
+        private ZmqConsumerProperties consumer = new ZmqConsumerProperties();
 
     }
 
@@ -235,7 +236,7 @@ public class ZmqProperties {
         /**
          * Producer configurations
          */
-        private ZmqProducer producer = new ZmqProducer();
+        private ZmqProducerProperties producer = new ZmqProducerProperties();
 
     }
 

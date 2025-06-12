@@ -1,13 +1,9 @@
 package com.aoneconsultancy.zeromq.annotation;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
 import org.zeromq.SocketType;
+
+import java.lang.annotation.*;
 
 /**
  * Annotation for methods that should receive messages from ZeroMQ.
@@ -26,7 +22,7 @@ public @interface ZmqListener {
      *
      * @return the {@code id} for the container managing for this endpoint.
      */
-    String id() default "";
+    String name() default "";
 
     /**
      * The socket address to connect to, e.g. tcp://localhost:5555.
@@ -36,7 +32,14 @@ public @interface ZmqListener {
     String[] values() default {};
 
     /**
-     * The socket address to connect to, e.g. tcp://localhost:5555.
+     * The bind or connect to use for socket.
+     *
+     * @return bind or connect
+     */
+    boolean bind() default false;
+
+    /**
+     * The socket address to connect to, e.g., tcp://localhost:5555.
      * If not specified, the default address from properties will be used.
      */
     @AliasFor("values")

@@ -5,10 +5,10 @@ import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ErrorHandler;
-import org.zeromq.SocketType;
 
 /**
  * A simple {@link MessageListenerContainer} implementation for testing.
@@ -19,29 +19,22 @@ import org.zeromq.SocketType;
  */
 public class MessageListenerTestContainer implements MessageListenerContainer {
 
+    @Getter
     private final ZmqListenerEndpoint endpoint;
     private boolean startInvoked;
     private boolean stopInvoked;
     private MessageListener messageListener;
     private MessageConverter messageConverter;
-    private List<String> endpoints;
-    private SocketType socketType;
     private int concurrency = 1;
-    private String listenerId;
     private ErrorHandler errorHandler;
     private ZmqSocketMonitor.SocketEventListener socketEventListener;
 
+    @Setter
+    @Getter
+    private ZmqConsumerProperties zmqConsumerProps;
+
     public MessageListenerTestContainer(ZmqListenerEndpoint endpoint) {
         this.endpoint = endpoint;
-    }
-
-    /**
-     * Return the endpoint that was used to create this container.
-     *
-     * @return the endpoint
-     */
-    public ZmqListenerEndpoint getEndpoint() {
-        return this.endpoint;
     }
 
     /**
@@ -105,23 +98,8 @@ public class MessageListenerTestContainer implements MessageListenerContainer {
     }
 
     @Override
-    public void setEndpoints(List<String> endpoints) {
-        this.endpoints = endpoints;
-    }
-
-    @Override
-    public void setSocketType(SocketType socketType) {
-        this.socketType = socketType;
-    }
-
-    @Override
     public void setConcurrency(int concurrency) {
         this.concurrency = concurrency;
-    }
-
-    @Override
-    public void setListenerId(String listenerId) {
-        this.listenerId = listenerId;
     }
 
     @Override

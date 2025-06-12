@@ -5,10 +5,6 @@ import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.SimpleMessageConverter;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +20,11 @@ import org.springframework.util.Assert;
 import org.zeromq.ZMQ;
 import zmq.io.net.Address;
 import zmq.io.net.NetProtocol;
+
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * An abstract {@link MessageListener} adapter providing the

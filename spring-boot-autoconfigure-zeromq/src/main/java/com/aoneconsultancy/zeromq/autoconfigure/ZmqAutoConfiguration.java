@@ -1,6 +1,6 @@
 package com.aoneconsultancy.zeromq.autoconfigure;
 
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import org.springframework.beans.factory.ObjectProvider;
@@ -69,7 +69,7 @@ public class ZmqAutoConfiguration {
                                        ZContext zContext,
                                        ZmqProperties properties) {
             ZmqProperties.Template templateConfig = properties.getTemplate();
-            ZmqProducer producer = templateConfig.getProducer();
+            ZmqProducerProperties producer = templateConfig.getProducer();
 
             // Create a template with all configuration parameters
             ZmqTemplate template = new ZmqTemplate(

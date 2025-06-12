@@ -4,11 +4,12 @@ import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.core.message.ZmqHeaders;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.Getter;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Getter;
 
 /**
  * Implementation of {@link MessageConverter} that uses Jackson 2 for JSON conversion.

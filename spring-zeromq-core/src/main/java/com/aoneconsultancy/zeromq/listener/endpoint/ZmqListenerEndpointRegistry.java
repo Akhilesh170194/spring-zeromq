@@ -2,23 +2,20 @@ package com.aoneconsultancy.zeromq.listener.endpoint;
 
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
 import com.aoneconsultancy.zeromq.listener.ZmqListenerContainerFactory;
+import lombok.Setter;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.context.*;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import lombok.Setter;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.SmartLifecycle;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 
 /**
  * Registry for ZeroMQ listener endpoints.
@@ -85,17 +82,18 @@ public class ZmqListenerEndpointRegistry implements DisposableBean, SmartLifecyc
     public void registerListenerContainer(
             ZmqListenerEndpoint endpoint, ZmqListenerContainerFactory<?> factory, boolean startImmediately) {
 
-        Assert.notNull(endpoint, "Endpoint must not be null");
-        Assert.notNull(factory, "Factory must not be null");
+        Assert.notNull(endpoint, "Endpoint must not be null!");
+        Assert.notNull(factory, "Factory must not be null!");
+        Assert.notNull(endpoint.getZmqConsumerProps(), "Endpoint Consumer props can not be null!");
 
-        String id = endpoint.getId();
-        Assert.hasText(id, "Endpoint id must not be empty");
+        String name = endpoint.getZmqConsumerProps().getName();
+        Assert.hasText(name, "Endpoint name must not be empty");
         this.listenerContainersLock.lock();
         try {
-            Assert.state(!this.listenerContainers.containsKey(id),
-                    "Another endpoint is already registered with id '" + id + "'");
+            Assert.state(!this.listenerContainers.containsKey(name),
+                    "Another endpoint is already registered with name '" + name + "'");
             MessageListenerContainer container = createListenerContainer(endpoint, factory);
-            this.listenerContainers.put(id, container);
+            this.listenerContainers.put(name, container);
             if (startImmediately) {
                 startIfNecessary(container);
             }

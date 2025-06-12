@@ -1,14 +1,13 @@
 package com.aoneconsultancy.zeromq.listener;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.MessageListener;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
-import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ErrorHandler;
-import org.zeromq.SocketType;
 
 /**
  * Abstraction representing a ZeroMQ message listener container.
@@ -33,18 +32,21 @@ public interface MessageListenerContainer extends SmartLifecycle, InitializingBe
     void setMessageConverter(MessageConverter messageConverter);
 
     /**
-     * Set the socket endpoints to connect to.
+     * Set Listener Consumer properties.
      *
-     * @param endpoints the socket address
+     * @param zmqConsumerProps the listener consumer properties
      */
-    void setEndpoints(List<String> endpoints);
+    void setZmqConsumerProps(ZmqConsumerProperties zmqConsumerProps);
 
     /**
-     * Set the socket type to use.
+     * Retrieves the properties of the ZeroMQ consumer that are
+     * configured for the message listener container.
      *
-     * @param socketType the socket type
+     * @return an instance of {@code ZmqConsumer} representing the
+     * consumer settings, including name, socket type, bind/connect
+     * configuration, endpoints, and subscribed topics.
      */
-    void setSocketType(SocketType socketType);
+    ZmqConsumerProperties getZmqConsumerProps();
 
     /**
      * Set the concurrency for this listener (number of threads).
@@ -76,8 +78,6 @@ public interface MessageListenerContainer extends SmartLifecycle, InitializingBe
      * @return whether the container is currently running
      */
     boolean isRunning();
-
-    void setListenerId(String id);
 
     @Override
     default void afterPropertiesSet() {

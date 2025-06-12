@@ -1,12 +1,5 @@
 package com.aoneconsultancy.zeromq.core;
 
-import java.io.Closeable;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
@@ -14,6 +7,14 @@ import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import zmq.ZError;
+
+import java.io.Closeable;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A low-level monitor for ZeroMQ sockets that uses the native monitoring API.
@@ -38,7 +39,7 @@ public class ZmqSocketMonitor implements Closeable {
     // Default endpoint format for inproc monitor sockets
     private static final String MONITOR_SOCKET_ENDPOINT_FORMAT = "inproc://monitor-%s";
 
-    private final String socketId;
+    private final String socketName;
     private final ZMQ.Socket monitoredSocket;
     private final ZMQ.Socket monitorSocket;
     private final String monitorEndpoint;
@@ -56,11 +57,11 @@ public class ZmqSocketMonitor implements Closeable {
      *
      * @param context         the ZeroMQ context
      * @param monitoredSocket the socket to monitor
-     * @param socketId        a unique identifier for the socket
+     * @param socketName      a unique identifier for the socket
      * @param eventListener   a listener for socket events
      */
-    public ZmqSocketMonitor(ZContext context, ZMQ.Socket monitoredSocket, String socketId, SocketEventListener eventListener) {
-        this(context, monitoredSocket, socketId, eventListener, 0xFFFF, 5000);
+    public ZmqSocketMonitor(ZContext context, ZMQ.Socket monitoredSocket, String socketName, SocketEventListener eventListener) {
+        this(context, monitoredSocket, socketName, eventListener, 0xFFFF, 5000);
     }
 
     /**
@@ -68,32 +69,32 @@ public class ZmqSocketMonitor implements Closeable {
      *
      * @param context         the ZeroMQ context
      * @param monitoredSocket the socket to monitor
-     * @param socketId        a unique identifier for the socket
+     * @param socketName      a unique identifier for the socket
      * @param eventListener   a listener for socket events
      * @param events          a bit mask of the events to monitor (EVENT_* constants)
      * @param shutdownTimeout timeout in milliseconds for shutting down the monitor
      */
-    public ZmqSocketMonitor(ZContext context, ZMQ.Socket monitoredSocket, String socketId,
+    public ZmqSocketMonitor(ZContext context, ZMQ.Socket monitoredSocket, String socketName,
                             SocketEventListener eventListener, int events, long shutdownTimeout) {
         Assert.notNull(context, "ZContext cannot be null");
         Assert.notNull(monitoredSocket, "Monitored socket cannot be null");
-        Assert.notNull(socketId, "Socket ID cannot be null");
+        Assert.notNull(socketName, "Socket Name cannot be null");
 
-        this.socketId = socketId;
+        this.socketName = socketName;
         this.monitoredSocket = monitoredSocket;
         this.eventListener = eventListener;
         this.shutdownTimeout = shutdownTimeout;
         this.monitorEvents = events;
 
         // Generate a unique inproc endpoint for this monitor
-        this.monitorEndpoint = String.format(MONITOR_SOCKET_ENDPOINT_FORMAT, socketId);
+        this.monitorEndpoint = String.format(MONITOR_SOCKET_ENDPOINT_FORMAT, socketName);
 
         // Create the monitor socket
         this.monitorSocket = context.createSocket(SocketType.PAIR);
 
         // Create a dedicated thread for monitoring
         this.monitorExecutor = Executors.newSingleThreadExecutor(r -> {
-            Thread thread = new Thread(r, "zmq-monitor-" + socketId);
+            Thread thread = new Thread(r, "zmq-monitor-" + socketName);
             thread.setDaemon(true);
             return thread;
         });
@@ -110,7 +111,7 @@ public class ZmqSocketMonitor implements Closeable {
                 // Monitor the socket for events
                 boolean monitoringStarted = monitoredSocket.monitor(monitorEndpoint, monitorEvents);
                 if (!monitoringStarted) {
-                    log.error("Failed to start monitoring for socket {}: {}", socketId,
+                    log.error("Failed to start monitoring for socket {}: {}", socketName,
                             ZError.toString(monitoredSocket.errno()));
                     running.set(false);
                     return false;
@@ -119,7 +120,7 @@ public class ZmqSocketMonitor implements Closeable {
                 // Connect the monitor socket to the endpoint
                 boolean connected = monitorSocket.connect(monitorEndpoint);
                 if (!connected) {
-                    log.error("Failed to connect monitor socket for {}: {}", socketId,
+                    log.error("Failed to connect monitor socket for {}: {}", socketName,
                             ZError.toString(monitorSocket.errno()));
                     monitoredSocket.monitor(null, 0); // Stop monitoring
                     running.set(false);
@@ -130,18 +131,18 @@ public class ZmqSocketMonitor implements Closeable {
                 monitorExecutor.submit(this::monitorLoop);
 
                 if (log.isInfoEnabled()) {
-                    log.info("Started ZeroMQ socket monitor for socket {}", socketId);
+                    log.info("Started ZeroMQ socket monitor for socket {}", socketName);
                 }
 
                 return true;
             } catch (Exception e) {
                 running.set(false);
-                log.error("Failed to start ZeroMQ socket monitor for socket {}: {}", socketId,
+                log.error("Failed to start ZeroMQ socket monitor for socket {}: {}", socketName,
                         e.getMessage(), e);
                 return false;
             }
         } else {
-            log.debug("ZeroMQ socket monitor for socket {} is already running", socketId);
+            log.debug("ZeroMQ socket monitor for socket {} is already running", socketName);
             return true;
         }
     }
@@ -150,7 +151,7 @@ public class ZmqSocketMonitor implements Closeable {
      * The main monitoring loop that receives and processes socket events.
      */
     private void monitorLoop() {
-        log.debug("ZeroMQ monitor loop started for socket {}", socketId);
+        log.debug("ZeroMQ monitor loop started for socket {}", socketName);
 
         while (this.running.get() && !Thread.currentThread().isInterrupted()) {
             try {
@@ -164,7 +165,7 @@ public class ZmqSocketMonitor implements Closeable {
                 }
             } catch (Exception e) {
                 if (this.running.get()) {
-                    log.error("Error in ZeroMQ monitor for socket {}: {}", socketId, e.getMessage(), e);
+                    log.error("Error in ZeroMQ monitor for socket {}: {}", socketName, e.getMessage(), e);
                 }
                 try {
                     // Sleep a bit to avoid tight error loops
@@ -176,7 +177,7 @@ public class ZmqSocketMonitor implements Closeable {
             }
         }
 
-        log.debug("ZeroMQ monitor loop stopped for socket {}", socketId);
+        log.debug("ZeroMQ monitor loop stopped for socket {}", socketName);
     }
 
     /**
@@ -205,15 +206,15 @@ public class ZmqSocketMonitor implements Closeable {
         // Log the event
         if (log.isDebugEnabled()) {
             log.debug("ZeroMQ socket {} event: {} ({}), value: {}, address: {}",
-                    socketId, getEventName(eventType), eventType, eventValue, address);
+                    socketName, getEventName(eventType), eventType, eventValue, address);
         }
 
         // Notify listeners
         if (eventListener != null) {
             try {
-                eventListener.onEvent(socketId, eventType, eventValue, address);
+                eventListener.onEvent(socketName, eventType, eventValue, address);
             } catch (Exception e) {
-                log.warn("Error in event listener for socket {}: {}", socketId, e.getMessage(), e);
+                log.warn("Error in event listener for socket {}: {}", socketName, e.getMessage(), e);
             }
         }
 
@@ -260,20 +261,20 @@ public class ZmqSocketMonitor implements Closeable {
                 // Shutdown the executor
                 monitorExecutor.shutdownNow();
                 if (!monitorExecutor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS)) {
-                    log.warn("ZeroMQ monitor thread for socket {} did not terminate in time", socketId);
+                    log.warn("ZeroMQ monitor thread for socket {} did not terminate in time", socketName);
                 }
 
                 // Close the monitor socket
                 monitorSocket.close();
 
                 if (log.isInfoEnabled()) {
-                    log.info("Stopped ZeroMQ socket monitor for socket {}", socketId);
+                    log.info("Stopped ZeroMQ socket monitor for socket {}", socketName);
                 }
             } catch (Exception e) {
-                log.warn("Error stopping ZeroMQ monitor for socket {}: {}", socketId, e.getMessage(), e);
+                log.warn("Error stopping ZeroMQ monitor for socket {}: {}", socketName, e.getMessage(), e);
             }
         } else {
-            log.debug("ZeroMQ socket monitor for socket {} is already stopped", socketId);
+            log.debug("ZeroMQ socket monitor for socket {} is already stopped", socketName);
         }
     }
 
@@ -289,11 +290,11 @@ public class ZmqSocketMonitor implements Closeable {
         /**
          * Called when a socket event occurs.
          *
-         * @param socketId   the ID of the socket that generated the event
+         * @param socketName the ID of the socket that generated the event
          * @param eventType  the type of event (one of the EVENT_* constants)
          * @param eventValue additional value associated with the event
          * @param address    the endpoint address associated with the event, may be null
          */
-        void onEvent(String socketId, int eventType, int eventValue, String address);
+        void onEvent(String socketName, int eventType, int eventValue, String address);
     }
 }

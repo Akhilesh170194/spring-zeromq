@@ -4,9 +4,10 @@ import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.SmartMessageConverter;
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.core.message.Message;
-import java.lang.reflect.Method;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
 
 /**
  * A simplified adapter that invokes a handler method for a single ZmqMessage.

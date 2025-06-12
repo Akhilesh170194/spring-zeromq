@@ -1,7 +1,5 @@
 package com.aoneconsultancy.zeromq.annotation;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.aoneconsultancy.zeromq.config.MessageListenerTestContainer;
 import com.aoneconsultancy.zeromq.config.ZmqListenerContainerTestFactory;
 import com.aoneconsultancy.zeromq.listener.PullZmqMessageListenerContainer;
@@ -9,13 +7,6 @@ import com.aoneconsultancy.zeromq.listener.endpoint.AbstractZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.listener.endpoint.MethodZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpointRegistry;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Repeatable;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.Iterator;
-import java.util.Objects;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.ApplicationEventPublisher;
@@ -29,6 +20,12 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+
+import java.lang.annotation.*;
+import java.util.Iterator;
+import java.util.Objects;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@link ZmqListenerAnnotationBeanPostProcessor}.
@@ -81,7 +78,7 @@ public class ZmqListenerAnnotationBeanPostProcessorTests {
         assertThat(methodEndpoint.getBean()).isNotNull();
         assertThat(methodEndpoint.getMethod()).isNotNull();
 
-        Iterator<String> iterator = ((MethodZmqListenerEndpoint) endpoint).getEndpoints().iterator();
+        Iterator<String> iterator = ((MethodZmqListenerEndpoint) endpoint).getZmqConsumerProps().getAddresses().iterator();
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5555");
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5556");
 
@@ -103,12 +100,12 @@ public class ZmqListenerAnnotationBeanPostProcessorTests {
         ZmqListenerContainerTestFactory factory = context.getBean(ZmqListenerContainerTestFactory.class);
         assertThat(factory.getListenerContainers().size()).as("one container should have been registered").isEqualTo(2);
         ZmqListenerEndpoint endpoint = factory.getListenerContainers().get(0).getEndpoint();
-        assertThat(Objects.requireNonNull(endpoint.getEndpoints())
+        assertThat(Objects.requireNonNull(endpoint.getZmqConsumerProps().getAddresses())
                 .iterator()
                 .next())
                 .isEqualTo("tcp://localhost:5557");
         endpoint = factory.getListenerContainers().get(1).getEndpoint();
-        assertThat(Objects.requireNonNull(endpoint.getEndpoints())
+        assertThat(Objects.requireNonNull(endpoint.getZmqConsumerProps().getAddresses())
                 .iterator()
                 .next())
                 .isEqualTo("tcp://localhost:5558");
@@ -124,12 +121,12 @@ public class ZmqListenerAnnotationBeanPostProcessorTests {
         ZmqListenerContainerTestFactory factory = context.getBean(ZmqListenerContainerTestFactory.class);
         assertThat(factory.getListenerContainers().size()).as("one container should have been registered").isEqualTo(2);
         ZmqListenerEndpoint endpoint = factory.getListenerContainers().get(0).getEndpoint();
-        assertThat(Objects.requireNonNull(endpoint.getEndpoints())
+        assertThat(Objects.requireNonNull(endpoint.getZmqConsumerProps().getAddresses())
                 .iterator()
                 .next())
                 .isEqualTo("tcp://localhost:5559");
         endpoint = factory.getListenerContainers().get(1).getEndpoint();
-        assertThat(Objects.requireNonNull(endpoint.getEndpoints())
+        assertThat(Objects.requireNonNull(endpoint.getZmqConsumerProps().getAddresses())
                 .iterator()
                 .next())
                 .isEqualTo("tcp://localhost:5560");
@@ -145,7 +142,7 @@ public class ZmqListenerAnnotationBeanPostProcessorTests {
         ZmqListenerContainerTestFactory factory = context.getBean(ZmqListenerContainerTestFactory.class);
         assertThat(factory.getListenerContainers().size()).as("one container should have been registered").isEqualTo(1);
         ZmqListenerEndpoint endpoint = factory.getListenerContainers().get(0).getEndpoint();
-        final Iterator<String> iterator = ((AbstractZmqListenerEndpoint) endpoint).getEndpoints().iterator();
+        final Iterator<String> iterator = ((AbstractZmqListenerEndpoint) endpoint).getZmqConsumerProps().getAddresses().iterator();
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5557");
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5555");
 
@@ -160,7 +157,7 @@ public class ZmqListenerAnnotationBeanPostProcessorTests {
         ZmqListenerContainerTestFactory factory = context.getBean(ZmqListenerContainerTestFactory.class);
         assertThat(factory.getListenerContainers().size()).as("one container should have been registered").isEqualTo(1);
         ZmqListenerEndpoint endpoint = factory.getListenerContainers().get(0).getEndpoint();
-        final Iterator<String> iterator = ((AbstractZmqListenerEndpoint) endpoint).getEndpoints().iterator();
+        final Iterator<String> iterator = ((AbstractZmqListenerEndpoint) endpoint).getZmqConsumerProps().getAddresses().iterator();
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5555");
         assertThat(iterator.next()).isEqualTo("tcp://localhost:5556");
 

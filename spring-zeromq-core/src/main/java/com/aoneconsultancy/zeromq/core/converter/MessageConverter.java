@@ -2,8 +2,9 @@ package com.aoneconsultancy.zeromq.core.converter;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.converter.MessageConversionException;
-import java.lang.reflect.Type;
 import org.springframework.lang.Nullable;
+
+import java.lang.reflect.Type;
 
 /**
  * Strategy interface for converting between ZeroMQ byte arrays and {@link Message} objects.

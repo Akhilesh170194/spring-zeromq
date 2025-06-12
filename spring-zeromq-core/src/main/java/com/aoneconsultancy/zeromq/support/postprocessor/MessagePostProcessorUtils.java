@@ -1,11 +1,12 @@
 package com.aoneconsultancy.zeromq.support.postprocessor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public final class MessagePostProcessorUtils {
 

@@ -1,23 +1,24 @@
 package com.aoneconsultancy.zeromq.integration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.aoneconsultancy.zeromq.annotation.EnableZmq;
 import com.aoneconsultancy.zeromq.annotation.ZmqListener;
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import com.aoneconsultancy.zeromq.core.ZmqTemplate;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.listener.PullZmqSocketListenerContainerFactory;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.zeromq.ZContext;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringJUnitConfig
 public class ZmqIntegrationTest {
@@ -37,7 +38,7 @@ public class ZmqIntegrationTest {
 
         @Bean
         public ZmqTemplate zmqTemplate(ZContext zContext) {
-            ZmqTemplate template = new ZmqTemplate(zContext, new ZmqProducer());
+            ZmqTemplate template = new ZmqTemplate(zContext, new ZmqProducerProperties());
             template.setDefaultEndpointName(TEST_ADDRESS);
             return template;
         }

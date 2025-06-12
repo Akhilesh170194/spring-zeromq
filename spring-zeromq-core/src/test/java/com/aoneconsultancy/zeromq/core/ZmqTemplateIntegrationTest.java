@@ -1,27 +1,25 @@
 package com.aoneconsultancy.zeromq.core;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.aoneconsultancy.zeromq.config.ZmqConsumer;
-import com.aoneconsultancy.zeromq.config.ZmqProducer;
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
+import com.aoneconsultancy.zeromq.config.ZmqProducerProperties;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.converter.SimpleMessageConverter;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.core.message.ZmqHeaders;
 import com.aoneconsultancy.zeromq.support.ActiveObjectCounter;
 import com.aoneconsultancy.zeromq.support.postprocessor.MessagePostProcessor;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.zeromq.SocketType;
 import org.zeromq.ZContext;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ZmqTemplateIntegrationTest {
 
@@ -32,29 +30,29 @@ public class ZmqTemplateIntegrationTest {
     @BeforeEach
     public void setUp() {
         context = new ZContext();
-        zmqTemplate = new ZmqTemplate(context, new ZmqProducer(), 1000);
+        zmqTemplate = new ZmqTemplate(context, new ZmqProducerProperties(), 1000);
         ActiveObjectCounter<BlockingQueueConsumer> activeObjectCounter = new ActiveObjectCounter<>();
 
-        ZmqConsumer consumerConfig = ZmqConsumer.builder().addresses(List.of("tcp://localhost:5555")).build();
+        ZmqConsumerProperties consumerConfig = ZmqConsumerProperties.builder().addresses(List.of("tcp://localhost:5555")).build();
         consumer = new BlockingQueueConsumer(context, activeObjectCounter, consumerConfig, 1000);
         consumer.start();
     }
 
-//    @AfterEach
-//    public void tearDown() {
-//        if (context != null) {
-//            context.close();
-//            context = null;
-//        }
-//        if (consumer != null) {
-//            consumer.stop();
-//            consumer = null;
-//        }
-//        if (zmqTemplate != null) {
-//            zmqTemplate.destroy();
-//            zmqTemplate = null;
-//        }
-//    }
+    @AfterEach
+    public void tearDown() {
+        if (zmqTemplate != null) {
+            zmqTemplate.destroy();
+            zmqTemplate = null;
+        }
+        if (consumer != null) {
+            consumer.stop();
+            consumer = null;
+        }
+        if (context != null) {
+            context.close();
+            context = null;
+        }
+    }
 
     @Order(1)
     @Test
@@ -88,10 +86,10 @@ public class ZmqTemplateIntegrationTest {
 
     @Order(3)
     @Test
-    public void testSendWithPostProcessor() {
+    public void testSendWithPostProcessor() throws InterruptedException {
         String testMessage = "Hello, ZeroMQ!";
         MessagePostProcessor postProcessor = message -> {
-            message.getMessageProperties().put("processed", true);
+            message.setMessageProperty("processed", true);
             return message;
         };
 

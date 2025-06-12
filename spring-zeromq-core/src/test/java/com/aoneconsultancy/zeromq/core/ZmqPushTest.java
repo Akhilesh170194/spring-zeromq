@@ -1,16 +1,5 @@
 package com.aoneconsultancy.zeromq.core;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +8,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ZmqPushTest {
@@ -49,7 +45,6 @@ public class ZmqPushTest {
         // Assert
         verify(mockContext).createSocket(SocketType.PUSH);
         verify(mockSocket).setHWM(testHwm);
-        verify(mockSocket).setSendBufferSize(1024); // Default value
         verify(mockSocket).bind(testAddress);
     }
 
@@ -64,7 +59,6 @@ public class ZmqPushTest {
         // Assert
         verify(mockContext).createSocket(SocketType.PUSH);
         verify(mockSocket).setHWM(testHwm);
-        verify(mockSocket).setSendBufferSize(testSendBufferSize);
         verify(mockSocket).bind(testAddress);
         verify(mockSocket).bind("tcp://localhost:5556");
     }

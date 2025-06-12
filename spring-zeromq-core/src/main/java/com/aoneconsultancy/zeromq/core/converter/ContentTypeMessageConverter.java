@@ -2,9 +2,10 @@ package com.aoneconsultancy.zeromq.core.converter;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.core.message.ZmqHeaders;
+import lombok.Setter;
+
 import java.util.HashMap;
 import java.util.Map;
-import lombok.Setter;
 
 /**
  * Implementation of {@link MessageConverter} that delegates to other converters

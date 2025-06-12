@@ -1,11 +1,6 @@
 package com.aoneconsultancy.zeromq.core;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.aoneconsultancy.zeromq.config.ZmqConsumer;
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.message.Message;
 import com.aoneconsultancy.zeromq.support.ActiveObjectCounter;
 import org.junit.jupiter.api.AfterEach;
@@ -15,6 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BlockingQueueConsumerIntegrationTest {
 
@@ -32,7 +31,7 @@ public class BlockingQueueConsumerIntegrationTest {
 
         context = new ZContext();
         ActiveObjectCounter<BlockingQueueConsumer> activeObjectCounter = new ActiveObjectCounter<>();
-        consumer = new BlockingQueueConsumer(context, activeObjectCounter, new ZmqConsumer(address), 1000);
+        consumer = new BlockingQueueConsumer(context, activeObjectCounter, ZmqConsumerProperties.builder().name("testConsumer").addresses(List.of(address)).type(SocketType.PULL).build(), 1000);
 
         // Simulate sending a message to the consumer
         socket = context.createSocket(SocketType.PUSH);

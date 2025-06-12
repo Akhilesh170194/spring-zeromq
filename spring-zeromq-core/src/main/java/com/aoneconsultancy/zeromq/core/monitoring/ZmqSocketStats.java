@@ -1,8 +1,9 @@
 package com.aoneconsultancy.zeromq.core.monitoring;
 
+import lombok.Getter;
+
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicLong;
-import lombok.Getter;
 
 /**
  * Statistics collected for a ZeroMQ socket.
@@ -10,7 +11,7 @@ import lombok.Getter;
 @Getter
 public class ZmqSocketStats {
 
-    private final String socketId;
+    private final String socketName;
     private final AtomicLong messagesReceived = new AtomicLong(0);
     private final AtomicLong messagesSent = new AtomicLong(0);
     private final AtomicLong bytesReceived = new AtomicLong(0);
@@ -25,12 +26,12 @@ public class ZmqSocketStats {
     private volatile String currentEndpoint = null;
 
     /**
-     * Create a new ZmqSocketStats for the given socket ID.
+     * Create a new ZmqSocketStats for the given socket name.
      *
-     * @param socketId the socket ID
+     * @param socketName the socket name
      */
-    public ZmqSocketStats(String socketId) {
-        this.socketId = socketId;
+    public ZmqSocketStats(String socketName) {
+        this.socketName = socketName;
     }
 
     /**

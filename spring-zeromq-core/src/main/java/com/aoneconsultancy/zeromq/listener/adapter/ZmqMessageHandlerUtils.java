@@ -1,6 +1,7 @@
 package com.aoneconsultancy.zeromq.listener.adapter;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

@@ -1,18 +1,21 @@
 package com.aoneconsultancy.zeromq.listener.endpoint;
 
 import com.aoneconsultancy.zeromq.listener.ZmqListenerContainerFactory;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Helper class for registering {@link ZmqListenerEndpoint} with a {@link ZmqListenerEndpointRegistry}.
@@ -21,7 +24,7 @@ import org.springframework.util.Assert;
 @Slf4j
 @ToString
 @EqualsAndHashCode
-public class ZmqListenerEndpointRegistrar {
+public class ZmqListenerEndpointRegistrar implements BeanFactoryAware, InitializingBean {
 
     @Getter
     @Setter
@@ -43,6 +46,7 @@ public class ZmqListenerEndpointRegistrar {
 
     // Custom method argument resolvers are no longer needed
 
+    @Override
     public void afterPropertiesSet() {
         registerAllEndpoints();
     }
@@ -71,8 +75,9 @@ public class ZmqListenerEndpointRegistrar {
      * @param factory  the factory to use
      */
     public void registerEndpoint(ZmqListenerEndpoint endpoint, ZmqListenerContainerFactory<?> factory) {
-        Assert.notNull(endpoint, "Endpoint must be set");
-        Assert.hasText(endpoint.getId(), "Endpoint id must be set");
+        Assert.notNull(endpoint, "Endpoint must be set!");
+        Assert.notNull(endpoint.getZmqConsumerProps(), "Endpoint Consumer props can not be null!");
+        Assert.hasText(endpoint.getZmqConsumerProps().getName(), "Endpoint name must be set!");
 
         if (this.endpointRegistry != null) {
             this.endpointRegistry.registerListenerContainer(endpoint, factory, true);

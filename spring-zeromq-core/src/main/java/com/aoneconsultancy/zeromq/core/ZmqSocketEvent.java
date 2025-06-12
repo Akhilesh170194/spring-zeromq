@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class ZmqSocketEvent extends ApplicationEvent {
 
-    private final String socketId;
+    private final String socketName;
     private final int eventType;
     private final int eventValue;
     private final String address;
@@ -17,14 +17,14 @@ public class ZmqSocketEvent extends ApplicationEvent {
     /**
      * Create a new ZmqSocketEvent.
      *
-     * @param socketId   the ID of the socket that generated the event
+     * @param socketName the ID of the socket that generated the event
      * @param eventType  the event type as defined in ZmqSocketMonitor.EVENT_*
      * @param eventValue additional value associated with the event
      * @param address    the address associated with the event, or null if none
      */
-    public ZmqSocketEvent(String socketId, int eventType, int eventValue, String address) {
-        super(socketId);
-        this.socketId = socketId;
+    public ZmqSocketEvent(String socketName, int eventType, int eventValue, String address) {
+        super(socketName);
+        this.socketName = socketName;
         this.eventType = eventType;
         this.eventValue = eventValue;
         this.address = address;
@@ -32,7 +32,7 @@ public class ZmqSocketEvent extends ApplicationEvent {
 
     @Override
     public String toString() {
-        return String.format("ZmqSocketEvent[socketId=%s, eventType=%d, eventValue=%d, address=%s]",
-                socketId, eventType, eventValue, address);
+        return String.format("ZmqSocketEvent[socketName=%s, eventType=%d, eventValue=%d, address=%s]",
+                socketName, eventType, eventValue, address);
     }
 }

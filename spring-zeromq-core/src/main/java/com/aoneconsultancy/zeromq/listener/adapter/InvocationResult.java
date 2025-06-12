@@ -1,10 +1,11 @@
 package com.aoneconsultancy.zeromq.listener.adapter;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import lombok.Getter;
 import org.springframework.expression.Expression;
 import org.springframework.lang.Nullable;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * The result of a listener method invocation.

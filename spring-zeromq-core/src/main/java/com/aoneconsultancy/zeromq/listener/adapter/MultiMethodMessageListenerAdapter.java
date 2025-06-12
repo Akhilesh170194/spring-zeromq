@@ -2,13 +2,14 @@ package com.aoneconsultancy.zeromq.listener.adapter;
 
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.core.message.Message;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.Assert;
 
 /**
  * A message listener adapter that invokes the appropriate method based on the message payload type.

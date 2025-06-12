@@ -1,15 +1,13 @@
 package com.aoneconsultancy.zeromq.core;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ZmqSocketMonitorIntegrationTest {
 
@@ -30,11 +28,11 @@ public class ZmqSocketMonitorIntegrationTest {
         if (socket != null) {
             socket.close();
         }
-        if (context != null) {
-            context.close();
-        }
         if (monitor != null) {
             monitor.close();
+        }
+        if (context != null) {
+            context.close();
         }
     }
 

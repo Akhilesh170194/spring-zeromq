@@ -2,9 +2,10 @@ package com.aoneconsultancy.zeromq.config;
 
 import com.aoneconsultancy.zeromq.listener.ZmqListenerContainerFactory;
 import com.aoneconsultancy.zeromq.listener.endpoint.ZmqListenerEndpoint;
+import org.springframework.beans.factory.DisposableBean;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.DisposableBean;
 
 /**
  * A {@link ZmqListenerContainerFactory} implementation that returns

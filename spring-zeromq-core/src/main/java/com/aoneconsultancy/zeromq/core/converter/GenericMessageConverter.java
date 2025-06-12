@@ -1,10 +1,11 @@
 package com.aoneconsultancy.zeromq.core.converter;
 
 import com.aoneconsultancy.zeromq.core.message.Message;
-import java.util.Map;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.util.Assert;
+
+import java.util.Map;
 
 /**
  * A generic implementation of {@link SmartMessageConverter} that delegates to a

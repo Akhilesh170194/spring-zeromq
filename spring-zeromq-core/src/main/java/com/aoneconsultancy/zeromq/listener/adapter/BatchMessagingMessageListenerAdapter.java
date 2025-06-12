@@ -2,10 +2,11 @@ package com.aoneconsultancy.zeromq.listener.adapter;
 
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.core.message.Message;
+import org.springframework.lang.Nullable;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import org.springframework.lang.Nullable;
 
 /**
  * An adapter that invokes a handler method for a batch of ZmqMessages.

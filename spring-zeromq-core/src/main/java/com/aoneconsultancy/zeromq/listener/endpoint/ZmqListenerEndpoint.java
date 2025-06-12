@@ -1,12 +1,13 @@
 package com.aoneconsultancy.zeromq.listener.endpoint;
 
+import com.aoneconsultancy.zeromq.config.ZmqConsumerProperties;
 import com.aoneconsultancy.zeromq.core.ZmqSocketMonitor;
 import com.aoneconsultancy.zeromq.core.converter.MessageConverter;
 import com.aoneconsultancy.zeromq.core.error.ZmqListenerErrorHandler;
 import com.aoneconsultancy.zeromq.listener.MessageListenerContainer;
-import java.util.List;
-import java.util.concurrent.Executor;
 import org.springframework.lang.Nullable;
+
+import java.util.concurrent.Executor;
 
 /**
  * Model for a message listener endpoint.
@@ -15,19 +16,11 @@ import org.springframework.lang.Nullable;
 public interface ZmqListenerEndpoint {
 
     /**
-     * Return the id of this endpoint.
+     * Returns the configuration of the ZMQ consumer for this endpoint.
      *
-     * @return the id of this endpoint
+     * @return the ZmqConsumer containing details such as socket type, address, and topics
      */
-    String getId();
-
-    /**
-     * Return the endpoints of this endpoint, if any.
-     *
-     * @return the address of this endpoint, or null
-     */
-    @Nullable
-    List<String> getEndpoints();
+    ZmqConsumerProperties getZmqConsumerProps();
 
     /**
      * Return the error handler of this endpoint, if any.
